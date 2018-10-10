@@ -1,0 +1,12 @@
+{
+    "name": "scaleplan/http",
+    "description": "HTTP request/response subsystem of Scaleplan framework",
+    "autoload": {
+        "psr-4": {
+            "Scaleplan\\Http\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=7.0"
+    }
+}
