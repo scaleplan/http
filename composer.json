@@ -9,7 +9,6 @@
     "require": {
         "php": ">=7.0",
         "lmc/http-constants": "dev-master",
-        "ext-http": "*",
         "scaleplan/helpers": "dev-master",
         "scaleplan/event": "dev-master"
     },
