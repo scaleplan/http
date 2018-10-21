@@ -7,6 +7,20 @@
         }
     },
     "require": {
-        "php": ">=7.0"
-    }
+        "php": ">=7.0",
+        "lmc/http-constants": "dev-master",
+        "ext-http": "*",
+        "scaleplan/helpers": "dev-master",
+        "scaleplan/event": "dev-master"
+    },
+    "repositories": [
+        {
+            "type": "git",
+            "url": "git@github.com:scaleplan/helpers.git"
+        },
+        {
+            "type": "git",
+            "url": "git@github.com:scaleplan/event.git"
+        }
+    ]
 }
