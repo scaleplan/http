@@ -127,7 +127,7 @@ class Request implements RequestInterface
         string $url,
         array $params,
         CacheInterface $cache = null,
-        $user = null)
+        UserInterface $user = null)
     {
         $this->user = $user;
         $this->url = $url;
@@ -308,7 +308,7 @@ class Request implements RequestInterface
         }
 
         $this->cache->setParams($this->params + $this->cacheAdditionalParams);
-        return $this->cache->getHtml();
+        return $this->cache->getHtml($this->user->getId());
     }
 
     /**
@@ -319,6 +319,12 @@ class Request implements RequestInterface
      */
     public function execute() : Response
     {
+        $cacheValue = $this->getCacheValue();
+        if ($cacheValue !== null) {
+            $this->response->setPayload($cacheValue);
+            return $this->response;
+        }
+
         [$controllerName, $methodName] = $this->convertURLToControllerMethod();
 
         $refClass = new \ReflectionClass($controllerName);
