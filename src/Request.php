@@ -240,6 +240,25 @@ class Request implements RequestInterface
     }
 
     /**
+     * @param string $name
+     *
+     * @return mixed|null
+     */
+    public function getParam(string $name)
+    {
+        return $this->params[$name] ?? null;
+    }
+
+    /**
+     * @param string $name
+     * @param $value
+     */
+    public function addParam(string $name, $value) : void
+    {
+        $this->params[$name] = $value;
+    }
+
+    /**
      * Запрос был отправлен через Ajax?
      *
      * @return bool

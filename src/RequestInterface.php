@@ -44,4 +44,11 @@ interface RequestInterface
      * @return array
      */
     public function getCookie() : array;
+
+    /**
+     * @param string $name
+     *
+     * @return mixed|null
+     */
+    public function getParam(string $name);
 }
