@@ -11,15 +11,5 @@
         "lmc/http-constants": "dev-master",
         "scaleplan/helpers": "dev-master",
         "scaleplan/event": "dev-master"
-    },
-    "repositories": [
-        {
-            "type": "git",
-            "url": "git@github.com:scaleplan/helpers.git"
-        },
-        {
-            "type": "git",
-            "url": "git@github.com:scaleplan/event.git"
-        }
-    ]
+    }
 }

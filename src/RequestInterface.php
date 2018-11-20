@@ -3,52 +3,49 @@
 namespace Scaleplan\Http;
 
 /**
- * Class RequestInterface
+ * Class Request
  *
  * @package Scaleplan\Http
  */
-interface RequestInterface
+interface RequestInterface extends AbstractRequestInterface
 {
     /**
-     * Вернуть URL запроса
-     *
-     * @return string
+     * @param array $headers
      */
-    public function getURL();
+    public function setHeaders(array $headers) : void;
 
     /**
-     * Вернуть параметры запросы
-     *
-     * @return array
+     * @param bool $isAjax
      */
-    public function getParams() : array;
+    public function setIsAjax(bool $isAjax) : void;
 
     /**
-     * Запрос был отправлен через Ajax?
-     *
-     * @return bool
+     * @param bool $method
      */
-    public function isAjax() : bool;
+    public function setMethod(bool $method) : void;
 
     /**
-     * @return mixed
+     * @param string $url
      */
-    public function getUser();
+    public function setUrl(string $url) : void;
 
     /**
-     * @return array
+     * @param array $params
      */
-    public function getSession() : array;
+    public function setParams(array $params) : void;
 
     /**
-     * @return array
+     * @param array $cacheAdditionalParams
      */
-    public function getCookie() : array;
+    public function setCacheAdditionalParams(array $cacheAdditionalParams) : void;
 
     /**
-     * @param string $name
-     *
-     * @return mixed|null
+     * @param array $session
      */
-    public function getParam(string $name);
+    public function setSession(array $session) : void;
+
+    /**
+     * @param array $cookie
+     */
+    public function setCookie(array $cookie) : void;
 }

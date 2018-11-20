@@ -7,15 +7,16 @@ use function Scaleplan\Event\dispatch;
 use Scaleplan\Http\Constants\Codes;
 use Scaleplan\Http\Exceptions\EnvVarNotFoundOrInvalidException;
 use Scaleplan\Http\Exceptions\NotFoundException;
+use function Scaleplan\Helpers\getenv;
 
 /**
  * Ответ от сервера
  *
- * Class Response
+ * Class CurrentResponse
  *
  * @package Scaleplan\Http
  */
-class Response implements ResponseInterface
+class CurrentResponse implements CurrentResponseInterface
 {
     public const DEFAULT_ERROR_CODE = Codes::HTTP_BAD_REQUEST;
 
@@ -24,7 +25,7 @@ class Response implements ResponseInterface
     public const SEND_FILE_EVENT_NAME = 'file_send';
 
     /**
-     * @var RequestInterface
+     * @var AbstractRequestInterface
      */
     protected $request;
 
@@ -56,9 +57,9 @@ class Response implements ResponseInterface
     /**
      * Response constructor.
      *
-     * @param RequestInterface $request
+     * @param AbstractRequestInterface $request
      */
-    public function __construct(RequestInterface $request)
+    public function __construct(AbstractRequestInterface $request)
     {
         $this->request = $request;
         $this->session = $request->getSession();
@@ -246,17 +247,17 @@ class Response implements ResponseInterface
     }
 
     /**
-     * @return RequestInterface
+     * @return AbstractRequestInterface
      */
-    public function getRequest() : RequestInterface
+    public function getRequest() : AbstractRequestInterface
     {
         return $this->request;
     }
 
     /**
-     * @param RequestInterface $request
+     * @param AbstractRequestInterface $request
      */
-    public function setRequest(RequestInterface $request) : void
+    public function setRequest(AbstractRequestInterface $request) : void
     {
         $this->request = $request;
     }
@@ -307,6 +308,33 @@ class Response implements ResponseInterface
     public function setSession(array $session) : void
     {
         $this->session = $session;
+    }
+
+    /**
+     * @param string $key
+     * @param $value
+     */
+    public function addSessionVar(string $key, $value) : void
+    {
+        $this->session[$key] = $value;
+    }
+
+    /**
+     * @param string $key
+     */
+    public function removeSessionVar(string $key) : void
+    {
+        unset($this->session[$key]);
+    }
+
+    /**
+     * @param $key
+     *
+     * @return mixed|null
+     */
+    public function getSessionVar($key)
+    {
+        return $this->session[$key] ?? null;
     }
 
     /**
