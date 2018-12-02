@@ -55,11 +55,23 @@ class CurrentResponse implements CurrentResponseInterface
     protected $cookie = [];
 
     /**
+     * @return CurrentResponseInterface
+     *
+     * @throws Exceptions\InvalidUrlException
+     * @throws \Scaleplan\Helpers\Exceptions\FileUploadException
+     * @throws \Scaleplan\Helpers\Exceptions\HelperException
+     */
+    public static function getResponse() : CurrentResponseInterface
+    {
+        return CurrentRequest::getRequest()->getResponse();
+    }
+
+    /**
      * Response constructor.
      *
-     * @param AbstractRequestInterface $request
+     * @param CurrentRequestInterface $request
      */
-    public function __construct(AbstractRequestInterface $request)
+    public function __construct(CurrentRequestInterface $request)
     {
         $this->request = $request;
         $this->session = $request->getSession();

@@ -26,7 +26,7 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
      * @throws \Scaleplan\Helpers\Exceptions\FileUploadException
      * @throws \Scaleplan\Helpers\Exceptions\HelperException
      */
-    public static function getCurrentRequest() : CurrentRequest
+    public static function getRequest() : CurrentRequest
     {
         if (!static::$currentRequest) {
             if (empty($_SERVER['REQUEST_URI']) || !static::checkUrl($_SERVER['REQUEST_URI'])) {

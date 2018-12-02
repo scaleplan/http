@@ -15,6 +15,11 @@ use Scaleplan\Http\Exceptions\NotFoundException;
 interface CurrentResponseInterface
 {
     /**
+     * @return CurrentResponse
+     */
+    public static function getResponse() : CurrentResponseInterface;
+
+    /**
      * Редирект на страницу авторизации, если еще не авторизован
      *
      * @throws EnvVarNotFoundOrInvalidException

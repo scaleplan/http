@@ -20,5 +20,5 @@ interface CurrentRequestInterface extends AbstractRequestInterface
      * @throws \Scaleplan\Helpers\Exceptions\FileUploadException
      * @throws \Scaleplan\Helpers\Exceptions\HelperException
      */
-    public static function getCurrentRequest() : CurrentRequest;
+    public static function getRequest() : CurrentRequest;
 }

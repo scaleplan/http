@@ -20,6 +20,10 @@ class Request extends AbstractRequest implements RequestInterface
 
     public const DEFAULT_TIMEOUT = 30;
 
+    public const RETRY_COUNT = 1;
+
+    public const RETRY_TIMEOUT = 10000;
+
     /**
      * @param array $headers
      */
@@ -133,10 +137,19 @@ class Request extends AbstractRequest implements RequestInterface
 
         $context = stream_context_create($opts);
 
-        try {
-            return file_get_contents($this->url, false, $context);
-        } catch (\Exception $e) {
+        $attempts = 0;
+        do {
+            try {
+                return file_get_contents($this->url, false, $context);
+            } catch (\PDOException $e) {
+                $attempts++;
+                if ($attempts <= static::RETRY_COUNT) {
+                    usleep(static::RETRY_TIMEOUT);
+                    continue;
+                }
+            }
+
             throw new RemoteServiceNotAvailableException();
-        }
+        } while(true);
     }
 }
