@@ -20,9 +20,9 @@ interface RequestInterface extends AbstractRequestInterface
     public function setIsAjax(bool $isAjax) : void;
 
     /**
-     * @param bool $method
+     * @param string $method
      */
-    public function setMethod(bool $method) : void;
+    public function setMethod(string $method) : void;
 
     /**
      * @param string $url
@@ -33,16 +33,6 @@ interface RequestInterface extends AbstractRequestInterface
      * @param array $params
      */
     public function setParams(array $params) : void;
-
-    /**
-     * @param array $cacheAdditionalParams
-     */
-    public function setCacheAdditionalParams(array $cacheAdditionalParams) : void;
-
-    /**
-     * @param array $session
-     */
-    public function setSession(array $session) : void;
 
     /**
      * @param array $cookie

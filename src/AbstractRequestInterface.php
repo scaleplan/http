@@ -24,26 +24,7 @@ interface AbstractRequestInterface
     /**
      * @return array
      */
-    public function getSession() : array;
-
-    /**
-     * @param $key
-     *
-     * @return mixed|null
-     */
-    public function getSessionVar($key);
-
-    /**
-     * @return array
-     */
     public function getCookie() : array;
-
-    /**
-     * @param $key
-     *
-     * @return mixed|null
-     */
-    public function getCookieVar($key);
 
     /**
      * Вернуть URL запроса
@@ -74,42 +55,9 @@ interface AbstractRequestInterface
     public function isAjax() : bool;
 
     /**
-     * @return mixed|null
+     * @return string
      */
-    public function getUser();
-
-    /**
-     * @param UserInterface $user
-     */
-    public function setUser(UserInterface $user) : void;
-
-    /**
-     * @return CurrentResponseInterface
-     *
-     * @throws Exceptions\EnvVarNotFoundOrInvalidException
-     * @throws \ReflectionException
-     */
-    public function execute() : CurrentResponseInterface;
-
-    /**
-     * @return bool
-     */
-    public function isMethod() : bool;
-
-    /**
-     * @return array
-     */
-    public function getCacheAdditionalParams() : array;
-
-    /**
-     * @return CacheInterface
-     */
-    public function getCache() : CacheInterface;
-
-    /**
-     * @param CacheInterface $cache
-     */
-    public function setCache(CacheInterface $cache) : void;
+    public function getMethod() : string;
 
     /**
      * @return CurrentResponseInterface
