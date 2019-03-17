@@ -3,8 +3,13 @@
 namespace Scaleplan\Http;
 
 use Lmc\HttpConstants\Header;
-use function Scaleplan\Helpers\getenv;
+use Scaleplan\DTO\DTO;
+use function Scaleplan\Helpers\get_env;
+use Scaleplan\Http\Exceptions\ClassMustBeDTOException;
+use Scaleplan\Http\Exceptions\HttpException;
 use Scaleplan\Http\Exceptions\RemoteServiceNotAvailableException;
+use Scaleplan\Http\Interfaces\RequestInterface;
+use Scaleplan\HttpStatus\HttpStatusCodes;
 
 /**
  * Class Request
@@ -13,22 +18,29 @@ use Scaleplan\Http\Exceptions\RemoteServiceNotAvailableException;
  */
 class Request extends AbstractRequest implements RequestInterface
 {
-    public const SERVICES_HTTP_VERSION_ENV_NAME = 'SERVICES_HTTP_VERSION';
-
     public const SERVICES_HTTP_TIMEOUT_ENV_NAME = 'SERVICES_HTTP_TIMEOUT';
 
-    public const DEFAULT_HTTP_VERSION = 1.1;
+    public const DEFAULT_CONNECTION_TIMEOUT = 500;
+    public const DEFAULT_TIMEOUT            = 2000;
+    public const RETRY_COUNT                = 1;
+    public const RETRY_TIMEOUT              = 10000;
+    public const ALLOW_REDIRECTS            = false;
 
-    public const DEFAULT_TIMEOUT = 30;
+    public const RESPONSE_RESULT_SECTION_NAME        = 'result';
+    public const RESPONSE_LIMIT_SECTION_NAME         = 'limit';
+    public const RESPONSE_PAGE_SECTION_NAME          = 'page';
+    public const RESPONSE_ERROR_MESSAGE_SECTION_NAME = 'error_message';
+    public const RESPONSE_ERRORS_SECTION_NAME        = 'errors';
 
-    public const RETRY_COUNT = 1;
-
-    public const RETRY_TIMEOUT = 10000;
+    /**
+     * @var string|null
+     */
+    protected $dtoClass;
 
     /**
      * @var bool
      */
-    protected $updated;
+    protected $validationEnable = false;
 
     /**
      * Request constructor.
@@ -39,10 +51,45 @@ class Request extends AbstractRequest implements RequestInterface
     public function __construct(string $url, array $params)
     {
         $this->url = $url;
+        $this->params = $params;
+    }
 
-        $this->params = array_map(function($item) {
-            return \is_array($item) ? array_filter($item) : $item;
-        }, $params);
+    /**
+     * @return bool
+     */
+    public function isValidationEnable() : bool
+    {
+        return $this->validationEnable;
+    }
+
+    /**
+     * @param bool $validationEnable
+     */
+    public function setValidationEnable(bool $validationEnable) : void
+    {
+        $this->validationEnable = $validationEnable;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDtoClass() : ?string
+    {
+        return $this->dtoClass;
+    }
+
+    /**
+     * @param string|null $dtoClass
+     *
+     * @throws ClassMustBeDTOException
+     */
+    public function setDtoClass(?string $dtoClass) : void
+    {
+        if (!($dtoClass instanceof DTO)) {
+            throw new ClassMustBeDTOException();
+        }
+
+        $this->dtoClass = $dtoClass;
     }
 
     /**
@@ -51,34 +98,30 @@ class Request extends AbstractRequest implements RequestInterface
     public function setHeaders(array $headers) : void
     {
         $this->headers = $headers;
-        $this->updated = true;
     }
 
     /**
      * @param bool $isAjax
      */
-    public function setIsAjax(bool $isAjax) : void
+    public function setIsAjax(\bool $isAjax) : void
     {
         $this->isAjax = $isAjax;
-        $this->updated = true;
     }
 
     /**
      * @param string $method
      */
-    public function setMethod(string $method) : void
+    public function setMethod(\string $method) : void
     {
         $this->method = $method;
-        $this->updated = true;
     }
 
     /**
      * @param string $url
      */
-    public function setUrl(string $url) : void
+    public function setUrl(\string $url) : void
     {
         $this->url = $url;
-        $this->updated = true;
     }
 
     /**
@@ -87,7 +130,6 @@ class Request extends AbstractRequest implements RequestInterface
     public function setParams(array $params) : void
     {
         $this->params = $params;
-        $this->updated = true;
     }
 
     /**
@@ -96,45 +138,40 @@ class Request extends AbstractRequest implements RequestInterface
     public function setCookie(array $cookie) : void
     {
         $this->cookie = $cookie;
-        $this->updated = true;
     }
 
     /**
      * @param string $key
      * @param string $value
      */
-    public function addCookie(string $key, string $value) : void
+    public function addCookie(\string $key, \string $value) : void
     {
         $this->cookie[$key] = $value;
-        $this->updated = true;
     }
 
     /**
      * @param string $key
      */
-    public function removeCookie(string $key) : void
+    public function removeCookie(\string $key) : void
     {
         unset($this->cookie[$key]);
-        $this->updated = true;
     }
 
     /**
      * @param string $name
      * @param $value
      */
-    public function addHeader(string $name, $value) : void
+    public function addHeader(\string $name, $value) : void
     {
         $this->headers[$name] = $value;
-        $this->updated = true;
     }
 
     /**
      * @param string $name
      */
-    public function removeHeader(string $name) : void
+    public function removeHeader(\string $name) : void
     {
         unset($this->headers[$name]);
-        $this->updated = true;
     }
 
     /**
@@ -143,16 +180,15 @@ class Request extends AbstractRequest implements RequestInterface
     public function clearHeaders() : void
     {
         $this->headers = [];
-        $this->updated = true;
     }
 
     /**
      * @return string
      */
-    protected function serializeCookie() : string
+    protected function getSerializeCookie() : \string
     {
         $cookie = $this->cookie;
-        array_walk($cookie, function(&$value, $key) {
+        array_walk($cookie, function (&$value, $key) {
             $value = "$key=$value";
         });
 
@@ -160,55 +196,105 @@ class Request extends AbstractRequest implements RequestInterface
     }
 
     /**
-     * @param bool $allowCacheValue
-     *
-     * @return string
-     *
-     * @throws RemoteServiceNotAvailableException
+     * @return string[]
      */
-    public function send(bool $allowCacheValue = true) : string
+    protected function getSerializeHeaders() : \string
     {
-        static $result;
-        if ($this->updated || !$allowCacheValue) {
-            $result = null;
-        }
+        $headers = $this->headers;
+        array_walk($headers, function (&$value, $key) {
+            $value = "$key: $value";
+        });
 
-        if ($result === null) {
-            $this->addHeader(Header::COOKIE, $this->serializeCookie());
-            $opts = [
-                'http' => [
-                    'method' => 'POST',
-                    'header' => $this->headers,
-                    'content' => json_encode(
-                        $this->params,
-                        JSON_OBJECT_AS_ARRAY | JSON_NUMERIC_CHECK | JSON_UNESCAPED_SLASHES
-                        | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION
-                    ),
-                    'protocol_version' => getenv(static::SERVICES_HTTP_VERSION_ENV_NAME)
-                        ?? static::DEFAULT_HTTP_VERSION,
-                    'timeout' => getenv(static::SERVICES_HTTP_TIMEOUT_ENV_NAME) ?? static::DEFAULT_TIMEOUT
-                ],
-            ];
+        return $headers;
+    }
 
-            $context = stream_context_create($opts);
-
-            $attempts = 0;
-            do {
-                try {
-                    $result = file_get_contents($this->url, false, $context);
-                    $this->updated = false;
-                } catch (\PDOException $e) {
-                    $attempts++;
-                    if ($attempts <= static::RETRY_COUNT) {
-                        usleep(static::RETRY_TIMEOUT);
-                        continue;
+    /**
+     * @param $result
+     *
+     * @throws \Scaleplan\DTO\Exceptions\ValidationException
+     */
+    protected function buildDTO(&$result) : void
+    {
+        if ($this->dtoClass && \is_array($result)) {
+            if ($result && !empty($result[0])) {
+                /** @var DTO $item */
+                foreach ($result as &$item) {
+                    $item = new $this->dtoClass($item);
+                    if ($this->isValidationEnable()) {
+                        $item->validate(['type']);
                     }
                 }
+            } else {
+                /** @var DTO $result */
+                $result = new $this->dtoClass($result);
+                if ($this->isValidationEnable()) {
+                    $result->validate(['type']);
+                }
+            }
+        }
+    }
 
-                throw new RemoteServiceNotAvailableException();
-            } while(true);
+
+    /**
+     * @return RemoteResponse
+     *
+     * @throws HttpException
+     * @throws RemoteServiceNotAvailableException
+     * @throws \Scaleplan\DTO\Exceptions\ValidationException
+     */
+    public function send() : RemoteResponse
+    {
+        $this->addHeader(Header::COOKIE, $this->getSerializeCookie());
+        $resource = curl_init($this->url);
+        curl_setopt($resource, CURLOPT_HTTPHEADER, $this->getSerializeHeaders());
+        if ($this->params) {
+            curl_setopt($resource, CURLOPT_POSTFIELDS, $this->params);
+            curl_setopt($resource, CURLOPT_POST, true);
         }
 
-        return $result;
+        curl_setopt(
+            $resource,
+            CURLOPT_TIMEOUT_MS,
+            get_env(static::SERVICES_HTTP_TIMEOUT_ENV_NAME) ?? static::DEFAULT_TIMEOUT
+        );
+        curl_setopt($resource, CURLOPT_CONNECTTIMEOUT_MS, static::DEFAULT_CONNECTION_TIMEOUT);
+        curl_setopt($resource, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($resource, CURLOPT_FOLLOWLOCATION, static::ALLOW_REDIRECTS);
+        curl_setopt($resource, CURLOPT_FAILONERROR, true);
+
+        $attempts = 0;
+        $responseData = null;
+        do {
+            $responseData = curl_exec($resource);
+            $code = curl_getinfo($resource, CURLINFO_HTTP_CODE);
+            $attempts++;
+        } while (
+            ($responseData === false || $code >= HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR)
+            && $attempts <= static::RETRY_COUNT
+            && !usleep(static::RETRY_TIMEOUT)
+        );
+
+        if ($code >= HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR) {
+            throw new RemoteServiceNotAvailableException();
+        }
+
+        $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? null, true);
+
+        if ($code >= HttpStatusCodes::HTTP_BAD_REQUEST) {
+            throw new HttpException(
+                $result[static::RESPONSE_ERROR_MESSAGE_SECTION_NAME] ?? null,
+                $code,
+                $result[static::RESPONSE_ERRORS_SECTION_NAME] ?? null
+            );
+        }
+
+        $this->buildDTO($result);
+
+        return new RemoteResponse(
+            $result,
+            $code,
+            $responseData[static::RESPONSE_LIMIT_SECTION_NAME],
+            $responseData[static::RESPONSE_PAGE_SECTION_NAME]
+        );
     }
 }

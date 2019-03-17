@@ -3,11 +3,20 @@
 namespace Scaleplan\Http;
 
 use Lmc\HttpConstants\Header;
-use function Scaleplan\Event\dispatch;
-use Scaleplan\Http\Constants\Codes;
+use function Scaleplan\Event\dispatch_async;
 use Scaleplan\Http\Exceptions\EnvVarNotFoundOrInvalidException;
 use Scaleplan\Http\Exceptions\NotFoundException;
-use function Scaleplan\Helpers\getenv;
+use function Scaleplan\Helpers\get_env;
+use Scaleplan\Http\Hooks\SendError;
+use Scaleplan\Http\Hooks\SendFile;
+use Scaleplan\Http\Hooks\SendRedirect;
+use Scaleplan\Http\Hooks\SendResponse;
+use Scaleplan\Http\Hooks\SendUnauthUserError;
+use Scaleplan\Http\Interfaces\CurrentRequestInterface;
+use Scaleplan\Http\Interfaces\CurrentResponseInterface;
+use Scaleplan\Http\Interfaces\ViewInterface;
+use Scaleplan\HttpStatus\HttpStatusCodes;
+use Scaleplan\HttpStatus\HttpStatusPhrases;
 
 /**
  * Ответ от сервера
@@ -18,14 +27,10 @@ use function Scaleplan\Helpers\getenv;
  */
 class CurrentResponse implements CurrentResponseInterface
 {
-    public const DEFAULT_ERROR_CODE = Codes::HTTP_BAD_REQUEST;
-
-    public const SEND_EVENT_NAME = 'response_send';
-
-    public const SEND_FILE_EVENT_NAME = 'file_send';
+    public const DEFAULT_ERROR_CODE = HttpStatusCodes::HTTP_BAD_REQUEST;
 
     /**
-     * @var AbstractRequestInterface
+     * @var CurrentRequestInterface
      */
     protected $request;
 
@@ -55,18 +60,6 @@ class CurrentResponse implements CurrentResponseInterface
     protected $cookie = [];
 
     /**
-     * @return CurrentResponseInterface
-     *
-     * @throws Exceptions\InvalidUrlException
-     * @throws \Scaleplan\Helpers\Exceptions\FileUploadException
-     * @throws \Scaleplan\Helpers\Exceptions\HelperException
-     */
-    public static function getResponse() : CurrentResponseInterface
-    {
-        return CurrentRequest::getRequest()->getResponse();
-    }
-
-    /**
      * Response constructor.
      *
      * @param CurrentRequestInterface $request
@@ -85,19 +78,20 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function redirectUnauthorizedUser() : void
     {
-        if (!($authPath = getenv('AUTH_PATH'))) {
+        if (!($authPath = get_env('AUTH_PATH'))) {
             throw new EnvVarNotFoundOrInvalidException();
         }
 
-        if (!$this->request->getUser()) {
-            if ($this->request->isAjax()) {
-                $this->payload = json_encode(['redirect' => $authPath], JSON_UNESCAPED_UNICODE);
-            } else {
-                $this->addHeader('Location', $authPath);
-            }
-
-            $this->setCode(Codes::HTTP_UNAUTHORIZED);
+        if ($this->request->isAjax()) {
+            $this->payload = json_encode(['redirect' => $authPath], JSON_UNESCAPED_UNICODE);
+        } else {
+            $this->addHeader(Header::LOCATION, $authPath);
         }
+
+        $this->setCode(HttpStatusCodes::HTTP_UNAUTHORIZED);
+        $this->send();
+
+        dispatch_async(SendUnauthUserError::class, $this);
     }
 
     /**
@@ -144,7 +138,7 @@ class CurrentResponse implements CurrentResponseInterface
      */
     protected static function buildErrorPage(\Throwable $e)
     {
-        if (!($viewClass = getenv('VIEW_CLASS')) || !($viewClass instanceof ViewInterface)) {
+        if (!($viewClass = get_env('VIEW_CLASS')) || !($viewClass instanceof ViewInterface)) {
             throw new EnvVarNotFoundOrInvalidException();
         }
 
@@ -160,10 +154,10 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function buildError(\Throwable $e) : void
     {
-        if (\in_array($e->getCode(), Codes::statusTexts)) {
+        if (\array_key_exists($e->getCode(), HttpStatusPhrases::HTTP_STATUSES)) {
             $this->setCode($e->getCode());
         } else {
-            $this->setCode(getenv('DEFAULT_ERROR_CODE') ?? static::DEFAULT_ERROR_CODE);
+            $this->setCode(get_env('DEFAULT_ERROR_CODE') ?? static::DEFAULT_ERROR_CODE);
         }
 
         if ($this->request->isAjax()) {
@@ -172,6 +166,9 @@ class CurrentResponse implements CurrentResponseInterface
         }
 
         $this->payload = static::buildErrorPage($e);
+        $this->send();
+
+        dispatch_async(SendError::class, $this);
     }
 
     /**
@@ -184,8 +181,12 @@ class CurrentResponse implements CurrentResponseInterface
         if ($this->request->isAjax()) {
             $this->payload = json_encode(['redirect' => $url], JSON_UNESCAPED_UNICODE);
         } else {
-            $this->addHeader('Location', $url);
+            $this->addHeader(Header::LOCATION, $url);
         }
+
+        $this->send();
+
+        dispatch_async(SendRedirect::class, $this);
     }
 
     /**
@@ -195,8 +196,10 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function XRedirect(string $url) : void
     {
-        $this->addHeader('Content-Type', '');
+        $this->addHeader(Header::CONTENT_TYPE, '');
         $this->addHeader('X-Accel-Redirect', $url);
+
+        dispatch_async(SendRedirect::class, $this);
     }
 
     /**
@@ -209,8 +212,6 @@ class CurrentResponse implements CurrentResponseInterface
 
     /**
      * Отправить ответ
-     *
-     * @throws \Scaleplan\Event\Exceptions\ClassIsNotEventException
      */
     public function send() : void
     {
@@ -223,7 +224,7 @@ class CurrentResponse implements CurrentResponseInterface
         header_remove();
 
         foreach ($this->headers as $name => $value) {
-            header($name . $value ? ": $value" : '');
+            header(($name . $value) ? ": $value" : '');
         }
 
         session_start($this->session);
@@ -232,15 +233,14 @@ class CurrentResponse implements CurrentResponseInterface
         }
 
         echo (string) $this->payload;
-        fastcgi_finish_request();
-        dispatch(getenv('SEND_EVENT_NAME') ?? static::SEND_EVENT_NAME);
+
+        dispatch_async(SendResponse::class, $this);
     }
 
     /**
      * @param string $filePath
      *
      * @throws NotFoundException
-     * @throws \Scaleplan\Event\Exceptions\ClassIsNotEventException
      */
     public function sendFile(string $filePath) : void
     {
@@ -254,24 +254,16 @@ class CurrentResponse implements CurrentResponseInterface
         http_send_content_type(mime_content_type($filePath));
         http_throttle(0.1, 2048);
         http_send_file($filePath);
-        fastcgi_finish_request();
-        dispatch(getenv('SEND_FILE_EVENT_NAME') ?? static::SEND_FILE_EVENT_NAME);
+
+        dispatch_async(SendFile::class, $this);
     }
 
     /**
-     * @return AbstractRequestInterface
+     * @return CurrentRequestInterface
      */
-    public function getRequest() : AbstractRequestInterface
+    public function getRequest() : CurrentRequestInterface
     {
         return $this->request;
-    }
-
-    /**
-     * @param AbstractRequestInterface $request
-     */
-    public function setRequest(AbstractRequestInterface $request) : void
-    {
-        $this->request = $request;
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace Scaleplan\Http;
 
+use Scaleplan\Http\Interfaces\AbstractRequestInterface;
+
 /**
  * Class AbstractRequest
  *
@@ -41,11 +43,6 @@ abstract class AbstractRequest implements AbstractRequestInterface
      * @var array
      */
     protected $params = [];
-
-    /**
-     * @var CurrentResponseInterface
-     */
-    protected $response;
 
     /**
      * @var array
@@ -134,21 +131,5 @@ abstract class AbstractRequest implements AbstractRequestInterface
     public function getMethod() : string
     {
         return $this->method;
-    }
-
-    /**
-     * @return CurrentResponseInterface
-     */
-    public function getResponse() : CurrentResponseInterface
-    {
-        return $this->response;
-    }
-
-    /**
-     * @param CurrentResponseInterface $response
-     */
-    public function setResponse(CurrentResponseInterface $response) : void
-    {
-        $this->response = $response;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Scaleplan\Http\Exceptions;
 
-use Scaleplan\Http\Constants\Codes;
+use Scaleplan\HttpStatus\HttpStatusCodes;
 
 /**
  * Class NotFoundException
@@ -13,5 +13,5 @@ class NotFoundException extends HttpException
 {
     public const MESSAGE = 'Not found.';
 
-    public const CODE = Codes::HTTP_NOT_FOUND;
+    public const CODE = HttpStatusCodes::HTTP_NOT_FOUND;
 }

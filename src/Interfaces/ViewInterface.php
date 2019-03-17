@@ -1,6 +1,6 @@
 <?php
 
-namespace Scaleplan\Http;
+namespace Scaleplan\Http\Interfaces;
 
 /**
  * Interface ViewInterface

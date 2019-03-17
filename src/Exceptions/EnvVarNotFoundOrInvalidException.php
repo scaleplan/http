@@ -2,7 +2,7 @@
 
 namespace Scaleplan\Http\Exceptions;
 
-use Scaleplan\Http\Constants\Codes;
+use Scaleplan\HttpStatus\HttpStatusCodes;
 
 /**
  * Class NotFoundException
@@ -13,5 +13,5 @@ class EnvVarNotFoundOrInvalidException extends HttpException
 {
     public const MESSAGE = 'Environment variable not found or invalid.';
 
-    public const CODE = Codes::HTTP_INTERNAL_SERVER_ERROR;
+    public const CODE = HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR;
 }

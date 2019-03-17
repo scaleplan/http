@@ -2,7 +2,7 @@
 
 namespace Scaleplan\Http\Exceptions;
 
-use Scaleplan\Http\Constants\Codes;
+use Scaleplan\HttpStatus\HttpStatusCodes;
 
 /**
  * Class HttpException
@@ -13,17 +13,23 @@ class HttpException extends \Exception
 {
     public const MESSAGE = 'Http transport error.';
 
-    public const CODE = Codes::HTTP_BAD_REQUEST;
+    public const CODE = HttpStatusCodes::HTTP_BAD_REQUEST;
+
+    /**
+     * @var string[]
+     */
+    public $errors;
 
     /**
      * HttpException constructor.
      *
-     * @param string|null $message
-     * @param int $code
-     * @param \Throwable|null $previous
+     * @param string $message
+     * @param int|null $code
+     * @param array|null $errors
      */
-    public function __construct(string $message = null, int $code = null, \Throwable $previous = null)
+    public function __construct(string $message = '', int $code = null, array $errors = null)
     {
-        parent::__construct($message ?? static::MESSAGE, $code ?? static::CODE, $previous);
+        $this->errors = $errors;
+        parent::__construct($message ?: static::MESSAGE, $code ?? static::CODE);
     }
 }
