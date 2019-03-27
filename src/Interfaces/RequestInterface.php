@@ -17,17 +17,17 @@ interface RequestInterface extends AbstractRequestInterface
     /**
      * @param bool $isAjax
      */
-    public function setIsAjax(\bool $isAjax) : void;
+    public function setIsAjax(bool $isAjax) : void;
 
     /**
      * @param string $method
      */
-    public function setMethod(\string $method) : void;
+    public function setMethod(string $method) : void;
 
     /**
      * @param string $url
      */
-    public function setUrl(\string $url) : void;
+    public function setUrl(string $url) : void;
 
     /**
      * @param array $params

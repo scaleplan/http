@@ -19,7 +19,7 @@ interface AbstractRequestInterface
      *
      * @return mixed|null
      */
-    public function getHeader(\string $name);
+    public function getHeader(string $name);
 
     /**
      * @return array
@@ -31,7 +31,7 @@ interface AbstractRequestInterface
      *
      * @return string
      */
-    public function getURL() : \string;
+    public function getURL() : string;
 
     /**
      * Вернуть параметры запросы
@@ -45,17 +45,17 @@ interface AbstractRequestInterface
      *
      * @return mixed|null
      */
-    public function getParam(\string $name);
+    public function getParam(string $name);
 
     /**
      * Запрос был отправлен через Ajax?
      *
      * @return bool
      */
-    public function isAjax() : \bool;
+    public function isAjax() : bool;
 
     /**
      * @return string
      */
-    public function getMethod() : \string;
+    public function getMethod() : string;
 }

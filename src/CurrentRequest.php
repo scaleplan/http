@@ -4,7 +4,6 @@ namespace Scaleplan\Http;
 
 use Scaleplan\Helpers\FileHelper;
 use function Scaleplan\Helpers\get_env;
-use Scaleplan\Http\Exceptions\InvalidUrlException;
 use Scaleplan\Http\Interfaces\CurrentRequestInterface;
 use Scaleplan\Http\Interfaces\CurrentResponseInterface;
 
@@ -15,11 +14,6 @@ use Scaleplan\Http\Interfaces\CurrentResponseInterface;
  */
 class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
 {
-    /**
-     * Шаблон проверки правильности формата URL
-     */
-    public const PAGE_URL_TEMPLATE = '/^.+?\/[^\/]+$/';
-
     /**
      * Какие заголовки запроса учесть во время кэширования
      *
@@ -40,16 +34,11 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
     /**
      * CurrentRequest constructor.
      *
-     * @throws InvalidUrlException
      * @throws \Scaleplan\Helpers\Exceptions\FileUploadException
      * @throws \Scaleplan\Helpers\Exceptions\HelperException
      */
     public function __construct()
     {
-        if (empty($_SERVER['REQUEST_URI']) || !static::checkUrl($_SERVER['REQUEST_URI'])) {
-            throw new InvalidUrlException();
-        }
-
         $this->url = $_SERVER['REQUEST_URI'];
         $this->params = array_map(function ($item) {
             return \is_array($item) ? array_filter($item) : $item;
@@ -92,22 +81,6 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
     public function getSessionVar($key)
     {
         return $this->session[$key] ?? null;
-    }
-
-    /**
-     * Проверить URL на соответствие маске по умолчанию
-     *
-     * @param string $url - URL
-     *
-     * @return bool
-     */
-    public static function checkUrl(string $url) : bool
-    {
-        if (!($template = get_env('PAGE_URL_TEMPLATE') ?? static::PAGE_URL_TEMPLATE)) {
-            return true;
-        }
-
-        return !empty($url) && preg_match($template, $url);
     }
 
     /**

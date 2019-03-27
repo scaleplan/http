@@ -12,7 +12,6 @@ use Scaleplan\HttpStatus\HttpStatusCodes;
 class HttpException extends \Exception
 {
     public const MESSAGE = 'Http transport error.';
-
     public const CODE = HttpStatusCodes::HTTP_BAD_REQUEST;
 
     /**

@@ -103,7 +103,7 @@ class Request extends AbstractRequest implements RequestInterface
     /**
      * @param bool $isAjax
      */
-    public function setIsAjax(\bool $isAjax) : void
+    public function setIsAjax(bool $isAjax) : void
     {
         $this->isAjax = $isAjax;
     }
@@ -111,7 +111,7 @@ class Request extends AbstractRequest implements RequestInterface
     /**
      * @param string $method
      */
-    public function setMethod(\string $method) : void
+    public function setMethod(string $method) : void
     {
         $this->method = $method;
     }
@@ -119,7 +119,7 @@ class Request extends AbstractRequest implements RequestInterface
     /**
      * @param string $url
      */
-    public function setUrl(\string $url) : void
+    public function setUrl(string $url) : void
     {
         $this->url = $url;
     }
@@ -144,7 +144,7 @@ class Request extends AbstractRequest implements RequestInterface
      * @param string $key
      * @param string $value
      */
-    public function addCookie(\string $key, \string $value) : void
+    public function addCookie(string $key, string $value) : void
     {
         $this->cookie[$key] = $value;
     }
@@ -152,7 +152,7 @@ class Request extends AbstractRequest implements RequestInterface
     /**
      * @param string $key
      */
-    public function removeCookie(\string $key) : void
+    public function removeCookie(string $key) : void
     {
         unset($this->cookie[$key]);
     }
@@ -161,7 +161,7 @@ class Request extends AbstractRequest implements RequestInterface
      * @param string $name
      * @param $value
      */
-    public function addHeader(\string $name, $value) : void
+    public function addHeader(string $name, $value) : void
     {
         $this->headers[$name] = $value;
     }
@@ -169,7 +169,7 @@ class Request extends AbstractRequest implements RequestInterface
     /**
      * @param string $name
      */
-    public function removeHeader(\string $name) : void
+    public function removeHeader(string $name) : void
     {
         unset($this->headers[$name]);
     }
@@ -185,7 +185,7 @@ class Request extends AbstractRequest implements RequestInterface
     /**
      * @return string
      */
-    protected function getSerializeCookie() : \string
+    protected function getSerializeCookie() : string
     {
         $cookie = $this->cookie;
         array_walk($cookie, function (&$value, $key) {
@@ -198,7 +198,7 @@ class Request extends AbstractRequest implements RequestInterface
     /**
      * @return string[]
      */
-    protected function getSerializeHeaders() : \string
+    protected function getSerializeHeaders() : string
     {
         $headers = $this->headers;
         array_walk($headers, function (&$value, $key) {

@@ -40,7 +40,7 @@ class RemoteResponse implements RemoteResponseInterface
      * @param int|null $limit
      * @param int|null $page
      */
-    public function __construct($result, \int $httpCode, \int $limit = null, \int $page = null)
+    public function __construct($result, int $httpCode, int $limit = null, int $page = null)
     {
         $this->result = $result;
         $this->httpCode = $httpCode;
