@@ -3,7 +3,6 @@
 namespace Scaleplan\Http\Interfaces;
 
 use Scaleplan\Http\ContentTypes;
-use Scaleplan\Http\Exceptions\EnvVarNotFoundOrInvalidException;
 use Scaleplan\Http\Exceptions\NotFoundException;
 
 /**
@@ -17,8 +16,6 @@ interface CurrentResponseInterface
 {
     /**
      * Редирект на страницу авторизации, если еще не авторизован
-     *
-     * @throws EnvVarNotFoundOrInvalidException
      */
     public function redirectUnauthorizedUser() : void;
 
@@ -42,15 +39,6 @@ interface CurrentResponseInterface
      * @param int $code
      */
     public function setCode(int $code) : void;
-
-    /**
-     * Формирует либо json-ошибку (если зарос AJAX), либо страницу ошибки
-     *
-     * @param \Throwable $e - объект пойманной ошибки
-     *
-     * @throws EnvVarNotFoundOrInvalidException
-     */
-    public function buildError(\Throwable $e) : void;
 
     /**
      * Редирект в зависимости от типа запроса
@@ -107,34 +95,6 @@ interface CurrentResponseInterface
      * @param array $headers
      */
     public function setHeaders(array $headers) : void;
-
-    /**
-     * @return array
-     */
-    public function getSession() : array;
-
-    /**
-     * @param array $session
-     */
-    public function setSession(array $session) : void;
-
-    /**
-     * @param string $key
-     * @param $value
-     */
-    public function addSessionVar(string $key, $value) : void;
-
-    /**
-     * @param string $key
-     */
-    public function removeSessionVar(string $key) : void;
-
-    /**
-     * @param $key
-     *
-     * @return mixed|null
-     */
-    public function getSessionVar($key);
 
     /**
      * @return array

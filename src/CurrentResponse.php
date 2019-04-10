@@ -4,19 +4,15 @@ namespace Scaleplan\Http;
 
 use Lmc\HttpConstants\Header;
 use function Scaleplan\Event\dispatch_async;
-use Scaleplan\Http\Exceptions\EnvVarNotFoundOrInvalidException;
+use function Scaleplan\Helpers\get_required_env;
 use Scaleplan\Http\Exceptions\NotFoundException;
-use function Scaleplan\Helpers\get_env;
-use Scaleplan\Http\Hooks\SendError;
 use Scaleplan\Http\Hooks\SendFile;
 use Scaleplan\Http\Hooks\SendRedirect;
 use Scaleplan\Http\Hooks\SendResponse;
 use Scaleplan\Http\Hooks\SendUnauthUserError;
 use Scaleplan\Http\Interfaces\CurrentRequestInterface;
 use Scaleplan\Http\Interfaces\CurrentResponseInterface;
-use Scaleplan\Http\Interfaces\ViewInterface;
 use Scaleplan\HttpStatus\HttpStatusCodes;
-use Scaleplan\HttpStatus\HttpStatusPhrases;
 
 /**
  * Ответ от сервера
@@ -52,11 +48,6 @@ class CurrentResponse implements CurrentResponseInterface
     /**
      * @var array
      */
-    protected $session = [];
-
-    /**
-     * @var array
-     */
     protected $cookie = [];
 
     /**
@@ -67,25 +58,20 @@ class CurrentResponse implements CurrentResponseInterface
     public function __construct(CurrentRequestInterface $request)
     {
         $this->request = $request;
-        $this->session = $request->getSession();
         $this->cookie = $request->getCookie();
     }
 
     /**
      * Редирект на страницу авторизации, если еще не авторизован
      *
-     * @throws EnvVarNotFoundOrInvalidException
+     * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
      */
     public function redirectUnauthorizedUser() : void
     {
-        if (!($authPath = get_env('AUTH_PATH'))) {
-            throw new EnvVarNotFoundOrInvalidException();
-        }
-
         if ($this->request->isAjax()) {
-            $this->payload = json_encode(['redirect' => $authPath], JSON_UNESCAPED_UNICODE);
+            $this->payload = json_encode(['redirect' => get_required_env('AUTH_PATH')], JSON_UNESCAPED_UNICODE);
         } else {
-            $this->addHeader(Header::LOCATION, $authPath);
+            $this->addHeader(Header::LOCATION, get_required_env('AUTH_PATH'));
         }
 
         $this->setCode(HttpStatusCodes::HTTP_UNAUTHORIZED);
@@ -128,50 +114,6 @@ class CurrentResponse implements CurrentResponseInterface
     }
 
     /**
-     * Возвращает страницу ошибки
-     *
-     * @param \Throwable $e - объект пойманной ошибки
-     *
-     * @return mixed
-     *
-     * @throws EnvVarNotFoundOrInvalidException
-     */
-    protected static function buildErrorPage(\Throwable $e)
-    {
-        if (!($viewClass = get_env('VIEW_CLASS')) || !($viewClass instanceof ViewInterface)) {
-            throw new EnvVarNotFoundOrInvalidException();
-        }
-
-        return $viewClass::renderError($e);
-    }
-
-    /**
-     * Формирует либо json-ошибку (если зарос AJAX), либо страницу ошибки
-     *
-     * @param \Throwable $e - объект пойманной ошибки
-     *
-     * @throws EnvVarNotFoundOrInvalidException
-     */
-    public function buildError(\Throwable $e) : void
-    {
-        if (\array_key_exists($e->getCode(), HttpStatusPhrases::HTTP_STATUSES)) {
-            $this->setCode($e->getCode());
-        } else {
-            $this->setCode(get_env('DEFAULT_ERROR_CODE') ?? static::DEFAULT_ERROR_CODE);
-        }
-
-        if ($this->request->isAjax()) {
-            $this->payload = json_encode(['error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
-        $this->payload = static::buildErrorPage($e);
-        $this->send();
-
-        dispatch_async(SendError::class, $this);
-    }
-
-    /**
      * Редирект в зависимости от типа запроса
      *
      * @param string $url - на какой урл редиректить
@@ -196,8 +138,10 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function XRedirect(string $url) : void
     {
-        $this->addHeader(Header::CONTENT_TYPE, '');
+        $this->setContentType('');
         $this->addHeader('X-Accel-Redirect', $url);
+
+        $this->send();
 
         dispatch_async(SendRedirect::class, $this);
     }
@@ -224,15 +168,15 @@ class CurrentResponse implements CurrentResponseInterface
         header_remove();
 
         foreach ($this->headers as $name => $value) {
-            header(($name . $value) ? ": $value" : '');
+            $name && header("$name: $value");
         }
 
-        session_start($this->session);
         foreach ($this->cookie as $key => $value) {
             setcookie($key, $value);
         }
 
         echo (string) $this->payload;
+        fastcgi_finish_request();
 
         dispatch_async(SendResponse::class, $this);
     }
@@ -254,6 +198,7 @@ class CurrentResponse implements CurrentResponseInterface
         http_send_content_type(mime_content_type($filePath));
         http_throttle(0.1, 2048);
         http_send_file($filePath);
+        fastcgi_finish_request();
 
         dispatch_async(SendFile::class, $this);
     }
@@ -296,49 +241,6 @@ class CurrentResponse implements CurrentResponseInterface
     public function setHeaders(array $headers) : void
     {
         $this->headers = $headers;
-    }
-
-    /**
-     * @return array
-     */
-    public function getSession() : array
-    {
-        return $this->session;
-    }
-
-    /**
-     * @param array $session
-     */
-    public function setSession(array $session) : void
-    {
-        $this->session = $session;
-    }
-
-    /**
-     * @param string $key
-     * @param $value
-     */
-    public function addSessionVar(string $key, $value) : void
-    {
-        $this->session[$key] = $value;
-    }
-
-    /**
-     * @param string $key
-     */
-    public function removeSessionVar(string $key) : void
-    {
-        unset($this->session[$key]);
-    }
-
-    /**
-     * @param $key
-     *
-     * @return mixed|null
-     */
-    public function getSessionVar($key)
-    {
-        return $this->session[$key] ?? null;
     }
 
     /**
