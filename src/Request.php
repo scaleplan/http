@@ -188,7 +188,7 @@ class Request extends AbstractRequest implements RequestInterface
     protected function getSerializeCookie() : string
     {
         $cookie = $this->cookie;
-        array_walk($cookie, function (&$value, $key) {
+        array_walk($cookie, static function (&$value, $key) {
             $value = "$key=$value";
         });
 
@@ -201,7 +201,7 @@ class Request extends AbstractRequest implements RequestInterface
     protected function getSerializeHeaders() : string
     {
         $headers = $this->headers;
-        array_walk($headers, function (&$value, $key) {
+        array_walk($headers, static function (&$value, $key) {
             $value = "$key: $value";
         });
 

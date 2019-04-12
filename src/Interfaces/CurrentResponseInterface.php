@@ -55,6 +55,11 @@ interface CurrentResponseInterface
     public function XRedirect(string $url) : void;
 
     /**
+     * @param \Throwable $e
+     */
+    public function buildError(\Throwable $e) : void;
+
+    /**
      * @param string $contentType
      */
     public function setContentType($contentType = ContentTypes::HTML) : void;

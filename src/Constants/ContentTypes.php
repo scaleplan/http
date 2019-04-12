@@ -1,6 +1,6 @@
 <?php
 
-namespace Scaleplan\Http;
+namespace Scaleplan\Http\Constants;
 
 /**
  * Class ContentTypes

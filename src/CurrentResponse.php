@@ -3,9 +3,13 @@
 namespace Scaleplan\Http;
 
 use Lmc\HttpConstants\Header;
+use function Scaleplan\DependencyInjection\get_required_static_container;
 use function Scaleplan\Event\dispatch_async;
 use function Scaleplan\Helpers\get_required_env;
+use Scaleplan\Http\Constants\ContentTypes;
+use Scaleplan\Http\Exceptions\HttpException;
 use Scaleplan\Http\Exceptions\NotFoundException;
+use Scaleplan\Http\Hooks\SendError;
 use Scaleplan\Http\Hooks\SendFile;
 use Scaleplan\Http\Hooks\SendRedirect;
 use Scaleplan\Http\Hooks\SendResponse;
@@ -13,6 +17,8 @@ use Scaleplan\Http\Hooks\SendUnauthUserError;
 use Scaleplan\Http\Interfaces\CurrentRequestInterface;
 use Scaleplan\Http\Interfaces\CurrentResponseInterface;
 use Scaleplan\HttpStatus\HttpStatusCodes;
+use Scaleplan\Main\Interfaces\ViewInterface;
+use Scaleplan\Result\DbResult;
 
 /**
  * Ответ от сервера
@@ -23,8 +29,6 @@ use Scaleplan\HttpStatus\HttpStatusCodes;
  */
 class CurrentResponse implements CurrentResponseInterface
 {
-    public const DEFAULT_ERROR_CODE = HttpStatusCodes::HTTP_BAD_REQUEST;
-
     /**
      * @var CurrentRequestInterface
      */
@@ -59,6 +63,7 @@ class CurrentResponse implements CurrentResponseInterface
     {
         $this->request = $request;
         $this->cookie = $request->getCookie();
+        $this->setContentType();
     }
 
     /**
@@ -69,6 +74,7 @@ class CurrentResponse implements CurrentResponseInterface
     public function redirectUnauthorizedUser() : void
     {
         if ($this->request->isAjax()) {
+            $this->setContentType(ContentTypes::JSON);
             $this->payload = json_encode(['redirect' => get_required_env('AUTH_PATH')], JSON_UNESCAPED_UNICODE);
         } else {
             $this->addHeader(Header::LOCATION, get_required_env('AUTH_PATH'));
@@ -120,12 +126,13 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function buildRedirect(string $url) : void
     {
-        if ($this->request->isAjax()) {
-            $this->payload = json_encode(['redirect' => $url], JSON_UNESCAPED_UNICODE);
-        } else {
-            $this->addHeader(Header::LOCATION, $url);
-        }
-
+//        if ($this->request->isAjax()) {
+//            $this->setContentType(ContentTypes::JSON);
+//            $this->payload = json_encode(['redirect' => $url], JSON_UNESCAPED_UNICODE);
+//        } else {
+//            $this->addHeader(Header::LOCATION, $url);
+//        }
+        $this->addHeader(Header::LOCATION, $url);
         $this->send();
 
         dispatch_async(SendRedirect::class, $this);
@@ -144,6 +151,47 @@ class CurrentResponse implements CurrentResponseInterface
         $this->send();
 
         dispatch_async(SendRedirect::class, $this);
+    }
+
+    /**
+     * @param \Throwable $e
+     *
+     * @throws \ReflectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ContainerNotFoundException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ContainerTypeNotSupportingException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\DependencyInjectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ParameterMustBeInterfaceNameOrClassNameException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ReturnTypeMustImplementsInterfaceException
+     * @throws \Scaleplan\Result\Exceptions\ResultException
+     */
+    public function buildError(\Throwable $e) : void
+    {
+        if ($this->request->isAjax()) {
+            $this->setContentType(ContentTypes::JSON);
+            $errorResult = new DbResult(
+                [
+                    'code' => $e->getCode(),
+                    'message' => $e->getMessage(),
+                    'errors' => method_exists($e, 'getErrors') ? $e->getErrors() : [],
+                ]
+            );
+        } else {
+            /** @var ViewInterface $view */
+            $view = get_required_static_container(ViewInterface::class);
+            $errorResult = $view::renderError($e);
+        }
+
+        $code = $e->getCode();
+        if (\in_array($code, HttpStatusCodes::ERROR_CODES, true)) {
+            $this->setCode($code);
+        } else {
+            $this->setCode(HttpException::CODE);
+        }
+
+        $this->setPayload($errorResult);
+        $this->send();
+
+        dispatch_async(SendError::class, $this);
     }
 
     /**
@@ -174,6 +222,8 @@ class CurrentResponse implements CurrentResponseInterface
         foreach ($this->cookie as $key => $value) {
             setcookie($key, $value);
         }
+
+        http_response_code($this->code);
 
         echo (string) $this->payload;
         fastcgi_finish_request();
