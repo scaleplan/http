@@ -26,11 +26,12 @@ class Request extends AbstractRequest implements RequestInterface
     public const RETRY_TIMEOUT              = 10000;
     public const ALLOW_REDIRECTS            = false;
 
-    public const RESPONSE_RESULT_SECTION_NAME        = 'result';
-    public const RESPONSE_LIMIT_SECTION_NAME         = 'limit';
-    public const RESPONSE_PAGE_SECTION_NAME          = 'page';
-    public const RESPONSE_ERROR_MESSAGE_SECTION_NAME = 'error_message';
-    public const RESPONSE_ERRORS_SECTION_NAME        = 'errors';
+    public const RESPONSE_RESULT_SECTION_NAME = 'result';
+
+    public const RESPONSE_ERROR_CODE_SECTION_NAME           = 'result';
+    public const RESPONSE_ERROR_MESSAGE_SECTION_NAME_FIRST  = 'message';
+    public const RESPONSE_ERROR_MESSAGE_SECTION_NAME_SECOND = 'error';
+    public const RESPONSE_ERRORS_SECTION_NAME               = 'errors';
 
     /**
      * @var string|null
@@ -85,7 +86,7 @@ class Request extends AbstractRequest implements RequestInterface
      */
     public function setDtoClass(?string $dtoClass) : void
     {
-        if (!($dtoClass instanceof DTO)) {
+        if (!is_subclass_of($dtoClass, DTO::class)) {
             throw new ClassMustBeDTOException();
         }
 
@@ -198,7 +199,7 @@ class Request extends AbstractRequest implements RequestInterface
     /**
      * @return string[]
      */
-    protected function getSerializeHeaders() : string
+    protected function getSerializeHeaders() : array
     {
         $headers = $this->headers;
         array_walk($headers, static function (&$value, $key) {
@@ -209,29 +210,26 @@ class Request extends AbstractRequest implements RequestInterface
     }
 
     /**
-     * @param $result
+     * @param array $response
+     *
+     * @return DTO|null
      *
      * @throws \Scaleplan\DTO\Exceptions\ValidationException
      */
-    protected function buildDTO(&$result) : void
+    protected function buildDTO(array $response) : ?DTO
     {
-        if ($this->dtoClass && \is_array($result)) {
-            if ($result && !empty($result[0])) {
-                /** @var DTO $item */
-                foreach ($result as &$item) {
-                    $item = new $this->dtoClass($item);
-                    if ($this->isValidationEnable()) {
-                        $item->validate(['type']);
-                    }
-                }
-            } else {
-                /** @var DTO $result */
-                $result = new $this->dtoClass($result);
-                if ($this->isValidationEnable()) {
-                    $result->validate(['type']);
-                }
+        if ($this->dtoClass && \is_array($response)) {
+            /** @var DTO $dto */
+            $dto = new $this->dtoClass($response);
+            if ($this->isValidationEnable()) {
+                $dto->validate(['type']);
+                $dto->validate();
             }
+
+            return $dto;
         }
+
+        return null;
     }
 
 
@@ -247,9 +245,9 @@ class Request extends AbstractRequest implements RequestInterface
         $this->addHeader(Header::COOKIE, $this->getSerializeCookie());
         $resource = curl_init($this->url);
         curl_setopt($resource, CURLOPT_HTTPHEADER, $this->getSerializeHeaders());
+        $this->method === 'POST' && curl_setopt($resource, CURLOPT_POST, true);
         if ($this->params) {
             curl_setopt($resource, CURLOPT_POSTFIELDS, $this->params);
-            curl_setopt($resource, CURLOPT_POST, true);
         }
 
         curl_setopt(
@@ -267,6 +265,7 @@ class Request extends AbstractRequest implements RequestInterface
         do {
             $responseData = curl_exec($resource);
             $code = curl_getinfo($resource, CURLINFO_HTTP_CODE);
+            $info = curl_getinfo($resource);
             $attempts++;
         } while (
             ($responseData === false || $code >= HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR)
@@ -278,23 +277,20 @@ class Request extends AbstractRequest implements RequestInterface
             throw new RemoteServiceNotAvailableException();
         }
 
-        $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? null, true);
+        $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? $responseData, true);
 
         if ($code >= HttpStatusCodes::HTTP_BAD_REQUEST) {
             throw new HttpException(
-                $result[static::RESPONSE_ERROR_MESSAGE_SECTION_NAME] ?? null,
-                $code,
+                $result[static::RESPONSE_ERROR_MESSAGE_SECTION_NAME_FIRST]
+                    ?? $result[static::RESPONSE_ERROR_MESSAGE_SECTION_NAME_SECOND]
+                    ?? '',
+                $result[static::RESPONSE_ERROR_CODE_SECTION_NAME] ?? $code,
                 $result[static::RESPONSE_ERRORS_SECTION_NAME] ?? null
             );
         }
 
-        $this->buildDTO($result);
+        $dto = $this->buildDTO($result);
 
-        return new RemoteResponse(
-            $result,
-            $code,
-            $responseData[static::RESPONSE_LIMIT_SECTION_NAME],
-            $responseData[static::RESPONSE_PAGE_SECTION_NAME]
-        );
+        return new RemoteResponse($dto ?? $result, $code);
     }
 }

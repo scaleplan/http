@@ -18,16 +18,6 @@ class RemoteResponse implements RemoteResponseInterface
     protected $result;
 
     /**
-     * @var int|null
-     */
-    protected $limit;
-
-    /**
-     * @var int|null
-     */
-    protected $page;
-
-    /**
      * @var int
      */
     protected $httpCode;
@@ -37,15 +27,11 @@ class RemoteResponse implements RemoteResponseInterface
      *
      * @param DTO|mixed $result
      * @param int $httpCode
-     * @param int|null $limit
-     * @param int|null $page
      */
-    public function __construct($result, int $httpCode, int $limit = null, int $page = null)
+    public function __construct($result, int $httpCode)
     {
         $this->result = $result;
         $this->httpCode = $httpCode;
-        $this->limit = $limit;
-        $this->page = $page;
     }
 
     /**
@@ -54,22 +40,6 @@ class RemoteResponse implements RemoteResponseInterface
     public function getResult()
     {
         return $this->result;
-    }
-
-    /**
-     * @return int|null
-     */
-    public function getLimit() : ?int
-    {
-        return $this->limit;
-    }
-
-    /**
-     * @return int|null
-     */
-    public function getPage() : ?int
-    {
-        return $this->page;
     }
 
     /**

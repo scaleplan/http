@@ -17,6 +17,7 @@ use Scaleplan\Http\Hooks\SendUnauthUserError;
 use Scaleplan\Http\Interfaces\CurrentRequestInterface;
 use Scaleplan\Http\Interfaces\CurrentResponseInterface;
 use Scaleplan\HttpStatus\HttpStatusCodes;
+use Scaleplan\Main\Interfaces\UserInterface;
 use Scaleplan\Main\Interfaces\ViewInterface;
 use Scaleplan\Result\DbResult;
 
@@ -47,7 +48,7 @@ class CurrentResponse implements CurrentResponseInterface
     /**
      * @var int
      */
-    protected $code;
+    protected $code = HttpStatusCodes::HTTP_OK;
 
     /**
      * @var array
@@ -69,10 +70,16 @@ class CurrentResponse implements CurrentResponseInterface
     /**
      * Редирект на страницу авторизации, если еще не авторизован
      *
+     * @param UserInterface $user
+     *
      * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
      */
-    public function redirectUnauthorizedUser() : void
+    public function redirectUnauthorizedUser(UserInterface $user) : void
     {
+        if (!$user->isGuest()) {
+            return;
+        }
+
         if ($this->request->isAjax()) {
             $this->setContentType(ContentTypes::JSON);
             $this->payload = json_encode(['redirect' => get_required_env('AUTH_PATH')], JSON_UNESCAPED_UNICODE);
@@ -80,7 +87,7 @@ class CurrentResponse implements CurrentResponseInterface
             $this->addHeader(Header::LOCATION, get_required_env('AUTH_PATH'));
         }
 
-        $this->setCode(HttpStatusCodes::HTTP_UNAUTHORIZED);
+        //$this->setCode(HttpStatusCodes::HTTP_UNAUTHORIZED);
         $this->send();
 
         dispatch_async(SendUnauthUserError::class, $this);

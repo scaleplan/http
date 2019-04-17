@@ -2,8 +2,9 @@
 
 namespace Scaleplan\Http\Interfaces;
 
-use Scaleplan\Http\ContentTypes;
+use Scaleplan\Http\Constants\ContentTypes;
 use Scaleplan\Http\Exceptions\NotFoundException;
+use Scaleplan\Main\Interfaces\UserInterface;
 
 /**
  * Ответ от сервера
@@ -16,8 +17,10 @@ interface CurrentResponseInterface
 {
     /**
      * Редирект на страницу авторизации, если еще не авторизован
+     *
+     * @param UserInterface $user
      */
-    public function redirectUnauthorizedUser() : void;
+    public function redirectUnauthorizedUser(UserInterface $user) : void;
 
     /**
      * @param string $name

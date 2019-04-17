@@ -17,16 +17,6 @@ interface RemoteResponseInterface
     public function getResult();
 
     /**
-     * @return int|null
-     */
-    public function getLimit() : ?int;
-
-    /**
-     * @return int|null
-     */
-    public function getPage() : ?int;
-
-    /**
      * @return int
      */
     public function getHttpCode() : int;
