@@ -80,15 +80,7 @@ class CurrentResponse implements CurrentResponseInterface
             return;
         }
 
-        if ($this->request->isAjax()) {
-            $this->setContentType(ContentTypes::JSON);
-            $this->payload = json_encode(['redirect' => get_required_env('AUTH_PATH')], JSON_UNESCAPED_UNICODE);
-        } else {
-            $this->addHeader(Header::LOCATION, get_required_env('AUTH_PATH'));
-        }
-
-        //$this->setCode(HttpStatusCodes::HTTP_UNAUTHORIZED);
-        $this->send();
+        $this->buildRedirect(get_required_env('AUTH_PATH'));
 
         dispatch_async(SendUnauthUserError::class, $this);
     }
@@ -133,13 +125,14 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function buildRedirect(string $url) : void
     {
-//        if ($this->request->isAjax()) {
-//            $this->setContentType(ContentTypes::JSON);
-//            $this->payload = json_encode(['redirect' => $url], JSON_UNESCAPED_UNICODE);
-//        } else {
-//            $this->addHeader(Header::LOCATION, $url);
-//        }
-        $this->addHeader(Header::LOCATION, $url);
+        if ($this->request->isAjax()) {
+            $this->setContentType(ContentTypes::JSON);
+            $this->payload = json_encode(['redirect' => $url], JSON_UNESCAPED_UNICODE);
+        } else {
+            $this->addHeader(Header::LOCATION, $url);
+        }
+        $this->setCode(HttpStatusCodes::HTTP_TEMPORARY_REDIRECT);
+
         $this->send();
 
         dispatch_async(SendRedirect::class, $this);
