@@ -41,6 +41,10 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
     {
         $this->url = $_SERVER['REQUEST_URI'];
         $this->params = array_map(static function ($item) {
+            if ($item === 'null') {
+                $item = null;
+            }
+
             return \is_array($item) ? array_filter($item) : $item;
         }, array_merge_recursive($_REQUEST, FileHelper::saveFiles($_FILES)));
 
