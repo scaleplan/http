@@ -26,9 +26,9 @@ class HttpException extends \Exception
      * @param int|null $code
      * @param array|null $errors
      */
-    public function __construct(string $message = '', int $code = null, array $errors = null)
+    public function __construct(string $message = '', int $code = 0, array $errors = null)
     {
         $this->errors = $errors;
-        parent::__construct($message ?: static::MESSAGE, $code ?? static::CODE);
+        parent::__construct($message ?: static::MESSAGE, $code ?: static::CODE);
     }
 }

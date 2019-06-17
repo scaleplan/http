@@ -12,5 +12,4 @@ use Scaleplan\HttpStatus\HttpStatusCodes;
 class InvalidUrlException extends HttpException
 {
     public const MESSAGE = 'Invalid url received.';
-    public const CODE = HttpStatusCodes::HTTP_NOT_ACCEPTABLE;
 }

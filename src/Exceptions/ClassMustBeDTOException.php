@@ -3,6 +3,7 @@
 namespace Scaleplan\Http\Exceptions;
 
 use Scaleplan\DTO\DTO;
+use Scaleplan\HttpStatus\HttpStatusCodes;
 
 /**
  * Class ClassMustBeDTOException
@@ -12,6 +13,7 @@ use Scaleplan\DTO\DTO;
 class ClassMustBeDTOException extends \Exception
 {
     public const MESSAGE = 'Class must be subclass of ' . DTO::class . '.';
+    public const CODE = HttpStatusCodes::HTTP_UNPROCESSABLE_ENTITY;
 
     /**
      * ClassMustBeDTOException constructor.
@@ -22,6 +24,6 @@ class ClassMustBeDTOException extends \Exception
      */
     public function __construct(string $message = '', int $code = 0, \Throwable $previous = null)
     {
-        parent::__construct($message ?? static::MESSAGE, $code, $previous);
+        parent::__construct($message ?: static::MESSAGE, $code, $previous);
     }
 }

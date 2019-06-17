@@ -12,6 +12,5 @@ use Scaleplan\HttpStatus\HttpStatusCodes;
 class NotFoundException extends HttpException
 {
     public const MESSAGE = 'Not found.';
-
     public const CODE = HttpStatusCodes::HTTP_NOT_FOUND;
 }
