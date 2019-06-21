@@ -82,7 +82,7 @@ class CurrentResponse implements CurrentResponseInterface
 
         $this->buildRedirect(get_required_env('AUTH_PATH'));
 
-        dispatch_async(SendUnauthUserError::class, $this);
+        dispatch_async(SendUnauthUserError::class, ['response' => $this]);
     }
 
     /**
@@ -135,7 +135,7 @@ class CurrentResponse implements CurrentResponseInterface
 
         $this->send();
 
-        dispatch_async(SendRedirect::class, $this);
+        dispatch_async(SendRedirect::class, ['response' => $this]);
     }
 
     /**
@@ -150,7 +150,7 @@ class CurrentResponse implements CurrentResponseInterface
 
         $this->send();
 
-        dispatch_async(SendRedirect::class, $this);
+        dispatch_async(SendRedirect::class, ['response' => $this]);
     }
 
     /**
@@ -191,7 +191,7 @@ class CurrentResponse implements CurrentResponseInterface
         $this->setPayload($errorResult);
         $this->send();
 
-        dispatch_async(SendError::class, $this);
+        dispatch_async(SendError::class, ['response' => $this]);
     }
 
     /**
@@ -226,9 +226,9 @@ class CurrentResponse implements CurrentResponseInterface
         http_response_code($this->code);
 
         echo (string) $this->payload;
-        fastcgi_finish_request();
+        //fastcgi_finish_request();
 
-        dispatch_async(SendResponse::class, $this);
+        dispatch_async(SendResponse::class, ['response' => $this]);
     }
 
     /**
@@ -250,7 +250,7 @@ class CurrentResponse implements CurrentResponseInterface
         http_send_file($filePath);
         fastcgi_finish_request();
 
-        dispatch_async(SendFile::class, $this);
+        dispatch_async(SendFile::class, ['response' => $this]);
     }
 
     /**
