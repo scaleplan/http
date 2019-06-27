@@ -264,8 +264,7 @@ class Request extends AbstractRequest implements RequestInterface
         $responseData = null;
         do {
             $responseData = curl_exec($resource);
-            $code = curl_getinfo($resource, CURLINFO_HTTP_CODE);
-            $info = curl_getinfo($resource);
+            $code = (int)curl_getinfo($resource, CURLINFO_HTTP_CODE);
             $attempts++;
         } while (
             ($responseData === false || $code >= HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR)

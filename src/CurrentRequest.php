@@ -88,7 +88,7 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
     }
 
     /**
-     * @return CurrentResponseInterface
+     * @return CurrentResponse
      */
     public function getResponse() : CurrentResponseInterface
     {
