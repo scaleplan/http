@@ -126,7 +126,7 @@ class CurrentResponse implements CurrentResponseInterface
     {
         if ($this->request->isAjax()) {
             $this->setContentType(ContentTypes::JSON);
-            $this->payload = json_encode(['redirect' => $url], JSON_UNESCAPED_UNICODE);
+            $this->payload = \json_encode(['redirect' => $url], JSON_UNESCAPED_UNICODE);
         } else {
             $this->addHeader(Header::LOCATION, $url);
         }
