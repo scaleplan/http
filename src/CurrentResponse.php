@@ -63,7 +63,7 @@ class CurrentResponse implements CurrentResponseInterface
     public function __construct(CurrentRequestInterface $request)
     {
         $this->request = $request;
-        $this->setContentType();
+        $this->setContentType($this->request->isAjax() ? ContentTypes::JSON : ContentTypes::HTML);
     }
 
     /**
@@ -125,7 +125,6 @@ class CurrentResponse implements CurrentResponseInterface
     public function buildRedirect(string $url) : void
     {
         if ($this->request->isAjax()) {
-            $this->setContentType(ContentTypes::JSON);
             $this->payload = \json_encode(['redirect' => $url], JSON_UNESCAPED_UNICODE);
         } else {
             $this->addHeader(Header::LOCATION, $url);
@@ -166,7 +165,6 @@ class CurrentResponse implements CurrentResponseInterface
     public function buildError(\Throwable $e) : void
     {
         if ($this->request->isAjax()) {
-            $this->setContentType(ContentTypes::JSON);
             $errorResult = new DbResult(
                 [
                     'code' => $e->getCode(),
@@ -241,6 +239,7 @@ class CurrentResponse implements CurrentResponseInterface
             throw new NotFoundException("File $filePath not found.");
         }
 
+        $this->setContentType(mime_content_type($filePath));
         $filePathArray = explode('/', $filePath);
         $fileName = end($filePathArray);
         http_send_content_disposition($fileName, true);
