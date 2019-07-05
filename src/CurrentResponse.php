@@ -134,6 +134,7 @@ class CurrentResponse implements CurrentResponseInterface
         $this->send();
 
         dispatch_async(SendRedirect::class, ['response' => $this]);
+
     }
 
     /**
@@ -223,9 +224,8 @@ class CurrentResponse implements CurrentResponseInterface
         http_response_code($this->code);
 
         echo (string) $this->payload;
-        //fastcgi_finish_request();
-
         dispatch_async(SendResponse::class, ['response' => $this]);
+        exit;
     }
 
     /**
@@ -246,9 +246,8 @@ class CurrentResponse implements CurrentResponseInterface
         http_send_content_type(mime_content_type($filePath));
         http_throttle(0.1, 2048);
         http_send_file($filePath);
-        fastcgi_finish_request();
-
         dispatch_async(SendFile::class, ['response' => $this]);
+        exit;
     }
 
     /**
