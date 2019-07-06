@@ -225,7 +225,7 @@ class CurrentResponse implements CurrentResponseInterface
 
         echo (string) $this->payload;
         dispatch_async(SendResponse::class, ['response' => $this]);
-        exit;
+        //exit;
     }
 
     /**
