@@ -4,6 +4,7 @@ namespace Scaleplan\Http;
 
 use Lmc\HttpConstants\Header;
 use Scaleplan\DTO\DTO;
+use Scaleplan\Http\Constants\Methods;
 use function Scaleplan\Helpers\get_env;
 use Scaleplan\Http\Exceptions\ClassMustBeDTOException;
 use Scaleplan\Http\Exceptions\HttpException;
@@ -245,7 +246,7 @@ class Request extends AbstractRequest implements RequestInterface
         $this->addHeader(Header::COOKIE, $this->getSerializeCookie());
         $resource = curl_init($this->url);
         curl_setopt($resource, CURLOPT_HTTPHEADER, $this->getSerializeHeaders());
-        $this->method === 'POST' && curl_setopt($resource, CURLOPT_POST, true);
+        $this->method === Methods::POST && curl_setopt($resource, CURLOPT_POST, true);
         if ($this->params) {
             curl_setopt($resource, CURLOPT_POSTFIELDS, $this->params);
         }
