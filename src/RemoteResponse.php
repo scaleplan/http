@@ -23,15 +23,22 @@ class RemoteResponse implements RemoteResponseInterface
     protected $httpCode;
 
     /**
+     * @var array
+     */
+    protected $headers;
+
+    /**
      * RemoteResponse constructor.
      *
-     * @param DTO|mixed $result
+     * @param $result
      * @param int $httpCode
+     * @param array $headers
      */
-    public function __construct($result, int $httpCode)
+    public function __construct($result, int $httpCode, array $headers = [])
     {
         $this->result = $result;
         $this->httpCode = $httpCode;
+        $this->headers = $headers;
     }
 
     /**
@@ -48,5 +55,23 @@ class RemoteResponse implements RemoteResponseInterface
     public function getHttpCode() : int
     {
         return $this->httpCode;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHeaders() : array
+    {
+        return $this->headers;
+    }
+
+    /**
+     * @param string $header
+     *
+     * @return string|null
+     */
+    public function getHeader(string $header) : ?string
+    {
+        return $this->headers[strtolower($header)] ?? null;
     }
 }

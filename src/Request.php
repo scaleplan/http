@@ -261,6 +261,22 @@ class Request extends AbstractRequest implements RequestInterface
         curl_setopt($resource, CURLOPT_FOLLOWLOCATION, static::ALLOW_REDIRECTS);
         curl_setopt($resource, CURLOPT_FAILONERROR, true);
 
+        $responseHeaders = [];
+        // this function is called by curl for each header received
+        curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function($cURL, $header) use (&$headers)
+            {
+                $len = strlen($header);
+                $headerArray = explode(':', $header, 2);
+                if (count($header) < 2) {// ignore invalid headers
+                    return $len;
+                }
+
+                $responseHeaders[strtolower(trim($headerArray[0]))][] = trim($headerArray[1]);
+
+                return $len;
+            }
+        );
+
         $attempts = 0;
         $responseData = null;
         do {
