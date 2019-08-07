@@ -3,9 +3,6 @@
 namespace Scaleplan\Http;
 
 use Lmc\HttpConstants\Header;
-use function Scaleplan\DependencyInjection\get_required_static_container;
-use function Scaleplan\Event\dispatch_async;
-use function Scaleplan\Helpers\get_required_env;
 use Scaleplan\Http\Constants\ContentTypes;
 use Scaleplan\Http\Exceptions\HttpException;
 use Scaleplan\Http\Exceptions\NotFoundException;
@@ -20,6 +17,9 @@ use Scaleplan\HttpStatus\HttpStatusCodes;
 use Scaleplan\Main\Interfaces\UserInterface;
 use Scaleplan\Main\Interfaces\ViewInterface;
 use Scaleplan\Result\DbResult;
+use function Scaleplan\DependencyInjection\get_required_static_container;
+use function Scaleplan\Event\dispatch_async;
+use function Scaleplan\Helpers\get_required_env;
 
 /**
  * Ответ от сервера
@@ -71,6 +71,7 @@ class CurrentResponse implements CurrentResponseInterface
      *
      * @param UserInterface $user
      *
+     * @throws \Scaleplan\Event\Exceptions\ClassNotImplementsEventInterfaceException
      * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
      */
     public function redirectUnauthorizedUser(UserInterface $user) : void
@@ -120,7 +121,9 @@ class CurrentResponse implements CurrentResponseInterface
     /**
      * Редирект в зависимости от типа запроса
      *
-     * @param string $url - на какой урл редиректить
+     * @param string $url
+     *
+     * @throws \Scaleplan\Event\Exceptions\ClassNotImplementsEventInterfaceException
      */
     public function buildRedirect(string $url) : void
     {
@@ -140,7 +143,9 @@ class CurrentResponse implements CurrentResponseInterface
     /**
      * Редирект на nginx
      *
-     * @param string $url - на какой урл редиректить
+     * @param string $url
+     *
+     * @throws \Scaleplan\Event\Exceptions\ClassNotImplementsEventInterfaceException
      */
     public function XRedirect(string $url) : void
     {
@@ -161,6 +166,7 @@ class CurrentResponse implements CurrentResponseInterface
      * @throws \Scaleplan\DependencyInjection\Exceptions\DependencyInjectionException
      * @throws \Scaleplan\DependencyInjection\Exceptions\ParameterMustBeInterfaceNameOrClassNameException
      * @throws \Scaleplan\DependencyInjection\Exceptions\ReturnTypeMustImplementsInterfaceException
+     * @throws \Scaleplan\Event\Exceptions\ClassNotImplementsEventInterfaceException
      * @throws \Scaleplan\Result\Exceptions\ResultException
      */
     public function buildError(\Throwable $e) : void
@@ -168,9 +174,9 @@ class CurrentResponse implements CurrentResponseInterface
         if ($this->request->isAjax()) {
             $errorResult = new DbResult(
                 [
-                    'code' => $e->getCode(),
+                    'code'    => $e->getCode(),
                     'message' => $e->getMessage(),
-                    'errors' => method_exists($e, 'getErrors') ? $e->getErrors() : [],
+                    'errors'  => method_exists($e, 'getErrors') ? $e->getErrors() : [],
                 ]
             );
         } else {
@@ -202,6 +208,8 @@ class CurrentResponse implements CurrentResponseInterface
 
     /**
      * Отправить ответ
+     *
+     * @throws \Scaleplan\Event\Exceptions\ClassNotImplementsEventInterfaceException
      */
     public function send() : void
     {
@@ -223,15 +231,17 @@ class CurrentResponse implements CurrentResponseInterface
 
         http_response_code($this->code);
 
-        echo (string) $this->payload;
+        echo (string)$this->payload;
         dispatch_async(SendResponse::class, ['response' => $this]);
-        //exit;
+        exit;
     }
 
     /**
      * @param string $filePath
      *
      * @throws NotFoundException
+     *
+     * @throws \Scaleplan\Event\Exceptions\ClassNotImplementsEventInterfaceException
      */
     public function sendFile(string $filePath) : void
     {
