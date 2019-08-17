@@ -4,6 +4,7 @@ namespace Scaleplan\Http;
 
 use Lmc\HttpConstants\Header;
 use Scaleplan\DTO\DTO;
+use Scaleplan\DTO\Exceptions\ValidationException;
 use Scaleplan\Http\Constants\Methods;
 use function Scaleplan\Helpers\get_env;
 use Scaleplan\Http\Exceptions\ClassMustBeDTOException;
@@ -233,13 +234,12 @@ class Request extends AbstractRequest implements RequestInterface
         return null;
     }
 
-
     /**
      * @return RemoteResponse
      *
      * @throws HttpException
      * @throws RemoteServiceNotAvailableException
-     * @throws \Scaleplan\DTO\Exceptions\ValidationException
+     * @throws ValidationException
      */
     public function send() : RemoteResponse
     {
@@ -263,7 +263,7 @@ class Request extends AbstractRequest implements RequestInterface
 
         $responseHeaders = [];
         // this function is called by curl for each header received
-        curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function($cURL, $header) use (&$headers)
+        curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function($cURL, $header)
             {
                 $len = strlen($header);
                 $headerArray = explode(':', $header, 2);
