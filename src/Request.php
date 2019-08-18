@@ -263,7 +263,7 @@ class Request extends AbstractRequest implements RequestInterface
 
         $responseHeaders = [];
         // this function is called by curl for each header received
-        curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function($cURL, $header)
+        curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function($cURL, $header) use (&$responseHeaders)
             {
                 $len = strlen($header);
                 $headerArray = explode(':', $header, 2);
@@ -307,6 +307,6 @@ class Request extends AbstractRequest implements RequestInterface
 
         $dto = $this->buildDTO($result);
 
-        return new RemoteResponse($dto ?? $result, $code);
+        return new RemoteResponse($dto ?? $result, $code, $responseHeaders);
     }
 }

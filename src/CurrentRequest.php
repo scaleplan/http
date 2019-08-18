@@ -34,8 +34,11 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
     /**
      * CurrentRequest constructor.
      *
+     * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
+     * @throws \Scaleplan\Helpers\Exceptions\FileSaveException
      * @throws \Scaleplan\Helpers\Exceptions\FileUploadException
      * @throws \Scaleplan\Helpers\Exceptions\HelperException
+     * @throws \Throwable
      */
     public function __construct()
     {

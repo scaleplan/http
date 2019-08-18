@@ -2,8 +2,6 @@
 
 namespace Scaleplan\Http\Exceptions;
 
-use Scaleplan\HttpStatus\HttpStatusCodes;
-
 /**
  * Class HttpException
  *
