@@ -63,7 +63,6 @@ class CurrentResponse implements CurrentResponseInterface
     public function __construct(CurrentRequestInterface $request)
     {
         $this->request = $request;
-        $this->setContentType($this->request->isAjax() ? ContentTypes::JSON : ContentTypes::HTML);
     }
 
     /**
@@ -220,8 +219,13 @@ class CurrentResponse implements CurrentResponseInterface
         }
 
         header_remove();
+        $this->setContentType($this->request->isAjax() && $this->payload ? ContentTypes::JSON : ContentTypes::HTML);
 
         foreach ($this->headers as $name => $value) {
+            if (!$name || !$value) {
+                continue;
+            }
+
             $name && header("$name: $value");
         }
 
