@@ -222,11 +222,7 @@ class CurrentResponse implements CurrentResponseInterface
         $this->setContentType($this->request->isAjax() && $this->payload ? ContentTypes::JSON : ContentTypes::HTML);
 
         foreach ($this->headers as $name => $value) {
-            if (!$name || !$value) {
-                continue;
-            }
-
-            $name && header("$name: $value");
+            $name && $value && header("$name: $value");
         }
 
         foreach ($this->cookie as $key => $value) {
