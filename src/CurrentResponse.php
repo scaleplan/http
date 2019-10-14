@@ -174,7 +174,7 @@ class CurrentResponse implements CurrentResponseInterface
             $errorResult = new DbResult(
                 [
                     'code'    => $e->getCode(),
-                    'message' => $e->getMessage(),
+                    'message' => iconv('UTF-8', 'UTF-8//IGNORE', $e->getMessage()),
                     'errors'  => method_exists($e, 'getErrors') ? $e->getErrors() : [],
                 ]
             );
@@ -194,7 +194,7 @@ class CurrentResponse implements CurrentResponseInterface
         $this->setPayload($errorResult);
         $this->send();
 
-        dispatch_async(SendError::class, ['response' => $this]);
+        dispatch_async(SendError::class, ['response' => $this, 'exception' => $e, ]);
     }
 
     /**
