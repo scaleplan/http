@@ -194,7 +194,7 @@ class CurrentResponse implements CurrentResponseInterface
         $this->setPayload($errorResult);
         $this->send();
 
-        dispatch_async(SendError::class, ['response' => $this, 'exception' => $e, ]);
+        dispatch_async(SendError::class, ['exception' => $e,]);
     }
 
     /**
