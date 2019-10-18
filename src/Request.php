@@ -51,7 +51,7 @@ class Request extends AbstractRequest implements RequestInterface
      * @param string $url
      * @param array $params
      */
-    public function __construct(string $url, array $params)
+    public function __construct(string $url, array $params = [])
     {
         $this->url = $url;
         $this->params = $params;
