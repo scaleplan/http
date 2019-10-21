@@ -42,15 +42,8 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
      */
     public function __construct()
     {
-        $this->url = $_SERVER['REQUEST_URI'];
-        $this->params = array_map(static function ($item) {
-            if ($item === 'null') {
-                $item = null;
-            }
-
-            return \is_array($item) ? array_filter($item) : $item;
-        }, array_merge_recursive($_REQUEST, FileHelper::saveFiles($_FILES)));
-
+        $this->url = explode('?', $_SERVER['REQUEST_URI'])[0];
+        $this->setParams($_REQUEST);
         $this->isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
             && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
@@ -70,6 +63,26 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
         foreach ($additionalHeaders as $header) {
             $this->cacheAdditionalParams[$header] = $_SERVER[$header] ?? null;
         }
+    }
+
+    /**
+     * @param array $params
+     *
+     * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
+     * @throws \Scaleplan\Helpers\Exceptions\FileSaveException
+     * @throws \Scaleplan\Helpers\Exceptions\FileUploadException
+     * @throws \Scaleplan\Helpers\Exceptions\HelperException
+     * @throws \Throwable
+     */
+    protected function setParams(array $params) : void
+    {
+        $this->params = array_map(static function ($item) {
+            if ($item === 'null') {
+                $item = null;
+            }
+
+            return \is_array($item) ? array_filter($item) : $item;
+        }, array_merge_recursive($params, FileHelper::saveFiles($_FILES)));
     }
 
     /**

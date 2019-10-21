@@ -14,7 +14,7 @@ abstract class AbstractRequest implements AbstractRequestInterface
     /**
      * @var array
      */
-    protected $headers = [];
+    protected $headers;
 
     /**
      * Является ли текущий запрос AJAX-запросом
@@ -28,7 +28,7 @@ abstract class AbstractRequest implements AbstractRequestInterface
      *
      * @var string
      */
-    protected $method = 'GET';
+    protected $method = 'POST';
 
     /**
      * URL запроса

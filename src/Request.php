@@ -6,12 +6,12 @@ use Lmc\HttpConstants\Header;
 use Scaleplan\DTO\DTO;
 use Scaleplan\DTO\Exceptions\ValidationException;
 use Scaleplan\Http\Constants\Methods;
-use function Scaleplan\Helpers\get_env;
 use Scaleplan\Http\Exceptions\ClassMustBeDTOException;
 use Scaleplan\Http\Exceptions\HttpException;
 use Scaleplan\Http\Exceptions\RemoteServiceNotAvailableException;
 use Scaleplan\Http\Interfaces\RequestInterface;
 use Scaleplan\HttpStatus\HttpStatusCodes;
+use function Scaleplan\Helpers\get_env;
 
 /**
  * Class Request
@@ -26,7 +26,7 @@ class Request extends AbstractRequest implements RequestInterface
     public const DEFAULT_TIMEOUT            = 2000;
     public const RETRY_COUNT                = 1;
     public const RETRY_TIMEOUT              = 10000;
-    public const ALLOW_REDIRECTS            = false;
+    public const ALLOW_REDIRECTS            = true;
 
     public const RESPONSE_RESULT_SECTION_NAME = 'result';
 
@@ -263,18 +263,21 @@ class Request extends AbstractRequest implements RequestInterface
 
         $responseHeaders = [];
         // this function is called by curl for each header received
-        curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function($cURL, $header) use (&$responseHeaders)
-            {
-                $len = strlen($header);
-                $headerArray = explode(':', $header, 2);
-                if (count($header) < 2) {// ignore invalid headers
-                    return $len;
-                }
-
-                $responseHeaders[strtolower(trim($headerArray[0]))][] = trim($headerArray[1]);
-
+        curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function ($cURL, $header) use (&$responseHeaders) {
+            $len = strlen($header);
+            if (!$len) {
                 return $len;
             }
+
+            $headerArray = explode(':', $header, 2);
+            if (count($header) < 2) {// ignore invalid headers
+                return $len;
+            }
+
+            $responseHeaders[strtolower(trim($headerArray[0]))][] = trim($headerArray[1]);
+
+            return $len;
+        }
         );
 
         $attempts = 0;
@@ -298,8 +301,8 @@ class Request extends AbstractRequest implements RequestInterface
         if ($code >= HttpStatusCodes::HTTP_BAD_REQUEST) {
             throw new HttpException(
                 $result[static::RESPONSE_ERROR_MESSAGE_SECTION_NAME_FIRST]
-                    ?? $result[static::RESPONSE_ERROR_MESSAGE_SECTION_NAME_SECOND]
-                    ?? '',
+                ?? $result[static::RESPONSE_ERROR_MESSAGE_SECTION_NAME_SECOND]
+                ?? '',
                 $result[static::RESPONSE_ERROR_CODE_SECTION_NAME] ?? $code,
                 $result[static::RESPONSE_ERRORS_SECTION_NAME] ?? null
             );
