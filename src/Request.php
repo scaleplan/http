@@ -26,7 +26,7 @@ class Request extends AbstractRequest implements RequestInterface
     public const DEFAULT_TIMEOUT            = 2000;
     public const RETRY_COUNT                = 1;
     public const RETRY_TIMEOUT              = 10000;
-    public const ALLOW_REDIRECTS            = false;
+    public const ALLOW_REDIRECTS            = true;
 
     public const RESPONSE_RESULT_SECTION_NAME = 'result';
 
