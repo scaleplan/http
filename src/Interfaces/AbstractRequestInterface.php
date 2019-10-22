@@ -9,6 +9,8 @@ namespace Scaleplan\Http\Interfaces;
  */
 interface AbstractRequestInterface
 {
+    public const X_REQUESTED_WITH_VALUE = 'xmlhttprequest';
+
     /**
      * @return array
      */

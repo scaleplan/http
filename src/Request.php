@@ -6,12 +6,12 @@ use Lmc\HttpConstants\Header;
 use Scaleplan\DTO\DTO;
 use Scaleplan\DTO\Exceptions\ValidationException;
 use Scaleplan\Http\Constants\Methods;
-use function Scaleplan\Helpers\get_env;
 use Scaleplan\Http\Exceptions\ClassMustBeDTOException;
 use Scaleplan\Http\Exceptions\HttpException;
 use Scaleplan\Http\Exceptions\RemoteServiceNotAvailableException;
 use Scaleplan\Http\Interfaces\RequestInterface;
 use Scaleplan\HttpStatus\HttpStatusCodes;
+use function Scaleplan\Helpers\get_env;
 
 /**
  * Class Request
@@ -46,6 +46,11 @@ class Request extends AbstractRequest implements RequestInterface
     protected $validationEnable = false;
 
     /**
+     * @var bool
+     */
+    protected $isKeepAuthHeader = true;
+
+    /**
      * Request constructor.
      *
      * @param string $url
@@ -53,8 +58,24 @@ class Request extends AbstractRequest implements RequestInterface
      */
     public function __construct(string $url, array $params = [])
     {
-        $this->url = $url;
+        $this->setUrl($url);
         $this->params = $params;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isKeepAuthHeader() : bool
+    {
+        return $this->isKeepAuthHeader;
+    }
+
+    /**
+     * @param bool $isKeepAuthHeader
+     */
+    public function setIsKeepAuthHeader(bool $isKeepAuthHeader) : void
+    {
+        $this->isKeepAuthHeader = $isKeepAuthHeader;
     }
 
     /**
@@ -106,9 +127,15 @@ class Request extends AbstractRequest implements RequestInterface
     /**
      * @param bool $isAjax
      */
-    public function setIsAjax(bool $isAjax) : void
+    public function setIsAjax(bool $isAjax = true) : void
     {
         $this->isAjax = $isAjax;
+        if ($isAjax) {
+            $this->addHeader(Header::X_REQUESTED_WITH, static::X_REQUESTED_WITH_VALUE);
+            return;
+        }
+
+        $this->removeHeader(Header::X_REQUESTED_WITH);
     }
 
     /**
@@ -124,7 +151,7 @@ class Request extends AbstractRequest implements RequestInterface
      */
     public function setUrl(string $url) : void
     {
-        $this->url = $url;
+        $this->url = strpos($url, '://') === false ? $_SERVER['HTTP_HOST'] . $url : $url;
     }
 
     /**
@@ -235,37 +262,49 @@ class Request extends AbstractRequest implements RequestInterface
     }
 
     /**
+     * @param int $code
+     *
+     * @return bool
+     */
+    public static function codeIsOk(int $code) : bool
+    {
+        return $code < HttpStatusCodes::HTTP_BAD_REQUEST && $code >= HttpStatusCodes::HTTP_OK;
+    }
+
+    /**
      * @return RemoteResponse
      *
-     * @throws HttpException
-     * @throws RemoteServiceNotAvailableException
-     * @throws ValidationException
+     * @throws \Throwable
      */
     public function send() : RemoteResponse
     {
         $this->addHeader(Header::COOKIE, $this->getSerializeCookie());
-        $resource = curl_init($this->url);
-        curl_setopt($resource, CURLOPT_HTTPHEADER, $this->getSerializeHeaders());
-        $this->method === Methods::POST && curl_setopt($resource, CURLOPT_POST, true);
-        if ($this->params) {
-            curl_setopt($resource, CURLOPT_POSTFIELDS, $this->params);
-        }
+        $resource = curl_init('http://' . $this->url);
+        try {
+            curl_setopt($resource, CURLOPT_HTTPHEADER, $this->getSerializeHeaders());
+            curl_setopt($resource, CURLOPT_UNRESTRICTED_AUTH, $this->isKeepAuthHeader);
+            $this->method === Methods::POST && $this->params && curl_setopt($resource, CURLOPT_POST, true);
+            if ($this->params) {
+                curl_setopt($resource, CURLOPT_POSTFIELDS, $this->params);
+            }
 
-        curl_setopt(
-            $resource,
-            CURLOPT_TIMEOUT_MS,
-            get_env(static::SERVICES_HTTP_TIMEOUT_ENV_NAME) ?? static::DEFAULT_TIMEOUT
-        );
-        curl_setopt($resource, CURLOPT_CONNECTTIMEOUT_MS, static::DEFAULT_CONNECTION_TIMEOUT);
-        curl_setopt($resource, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($resource, CURLOPT_FOLLOWLOCATION, static::ALLOW_REDIRECTS);
-        curl_setopt($resource, CURLOPT_FAILONERROR, true);
+            curl_setopt(
+                $resource,
+                CURLOPT_TIMEOUT_MS,
+                get_env(static::SERVICES_HTTP_TIMEOUT_ENV_NAME) ?? static::DEFAULT_TIMEOUT
+            );
+            curl_setopt($resource, CURLOPT_CONNECTTIMEOUT_MS, static::DEFAULT_CONNECTION_TIMEOUT);
+            curl_setopt($resource, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($resource, CURLOPT_FOLLOWLOCATION, static::ALLOW_REDIRECTS);
+            curl_setopt($resource, CURLOPT_FAILONERROR, true);
 
-        $responseHeaders = [];
-        // this function is called by curl for each header received
-        curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function($cURL, $header) use (&$responseHeaders)
-            {
+            $responseHeaders = [];
+            curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function ($cURL, $header) use (&$responseHeaders) {
                 $len = strlen($header);
+                if (!$len) {
+                    return $len;
+                }
+
                 $headerArray = explode(':', $header, 2);
                 if (count($header) < 2) {// ignore invalid headers
                     return $len;
@@ -274,39 +313,50 @@ class Request extends AbstractRequest implements RequestInterface
                 $responseHeaders[strtolower(trim($headerArray[0]))][] = trim($headerArray[1]);
 
                 return $len;
-            }
-        );
+            });
 
-        $attempts = 0;
-        $responseData = null;
-        do {
-            $responseData = curl_exec($resource);
-            $code = (int)curl_getinfo($resource, CURLINFO_HTTP_CODE);
-            $attempts++;
-        } while (
-            ($responseData === false || $code >= HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR)
-            && $attempts <= static::RETRY_COUNT
-            && !usleep(static::RETRY_TIMEOUT)
-        );
-
-        if ($code >= HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR) {
-            throw new RemoteServiceNotAvailableException();
-        }
-
-        $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? $responseData, true);
-
-        if ($code >= HttpStatusCodes::HTTP_BAD_REQUEST) {
-            throw new HttpException(
-                $result[static::RESPONSE_ERROR_MESSAGE_SECTION_NAME_FIRST]
-                    ?? $result[static::RESPONSE_ERROR_MESSAGE_SECTION_NAME_SECOND]
-                    ?? '',
-                $result[static::RESPONSE_ERROR_CODE_SECTION_NAME] ?? $code,
-                $result[static::RESPONSE_ERRORS_SECTION_NAME] ?? null
+            $attempts = 0;
+            $responseData = null;
+            do {
+                $responseData = curl_exec($resource);
+                $code = (int)curl_getinfo($resource, CURLINFO_HTTP_CODE);
+                $attempts++;
+            } while (
+                ($responseData === false || $code >= HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR)
+                && $attempts <= static::RETRY_COUNT
+                && !usleep(static::RETRY_TIMEOUT)
             );
+
+
+            $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? $responseData, true);
+
+            if (!static::codeIsOk($code)) {
+                $message = curl_error($resource);
+
+                if ($code >= HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR) {
+                    throw new RemoteServiceNotAvailableException($message);
+                }
+
+                if ($code >= HttpStatusCodes::HTTP_BAD_REQUEST && $result) {
+                    throw new HttpException(
+                        $result[static::RESPONSE_ERROR_MESSAGE_SECTION_NAME_FIRST]
+                        ?? $result[static::RESPONSE_ERROR_MESSAGE_SECTION_NAME_SECOND]
+                        ?? $message,
+                        $result[static::RESPONSE_ERROR_CODE_SECTION_NAME] ?? $code,
+                        $result[static::RESPONSE_ERRORS_SECTION_NAME] ?? null
+                    );
+                }
+
+                throw new HttpException($message, $code);
+            }
+
+            $dto = $this->buildDTO($result);
+
+            return new RemoteResponse($dto ?? $result, $code, $responseHeaders);
+        } catch (\Throwable $e) {
+            throw $e;
+        } finally {
+            curl_close($resource);
         }
-
-        $dto = $this->buildDTO($result);
-
-        return new RemoteResponse($dto ?? $result, $code, $responseHeaders);
     }
 }

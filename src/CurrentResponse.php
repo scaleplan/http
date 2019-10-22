@@ -16,6 +16,7 @@ use Scaleplan\Http\Interfaces\CurrentResponseInterface;
 use Scaleplan\HttpStatus\HttpStatusCodes;
 use Scaleplan\Main\Interfaces\UserInterface;
 use Scaleplan\Main\Interfaces\ViewInterface;
+use Scaleplan\Main\View;
 use Scaleplan\Result\DbResult;
 use function Scaleplan\DependencyInjection\get_required_static_container;
 use function Scaleplan\Event\dispatch_async;
@@ -159,6 +160,7 @@ class CurrentResponse implements CurrentResponseInterface
     /**
      * @param \Throwable $e
      *
+     * @throws \PhpQuery\Exceptions\PhpQueryException
      * @throws \ReflectionException
      * @throws \Scaleplan\DependencyInjection\Exceptions\ContainerNotFoundException
      * @throws \Scaleplan\DependencyInjection\Exceptions\ContainerTypeNotSupportingException
@@ -166,7 +168,9 @@ class CurrentResponse implements CurrentResponseInterface
      * @throws \Scaleplan\DependencyInjection\Exceptions\ParameterMustBeInterfaceNameOrClassNameException
      * @throws \Scaleplan\DependencyInjection\Exceptions\ReturnTypeMustImplementsInterfaceException
      * @throws \Scaleplan\Event\Exceptions\ClassNotImplementsEventInterfaceException
+     * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
      * @throws \Scaleplan\Result\Exceptions\ResultException
+     * @throws \Scaleplan\Templater\Exceptions\DomElementNotFountException
      */
     public function buildError(\Throwable $e) : void
     {
@@ -179,7 +183,7 @@ class CurrentResponse implements CurrentResponseInterface
                 ]
             );
         } else {
-            /** @var ViewInterface $view */
+            /** @var View $view */
             $view = get_required_static_container(ViewInterface::class);
             $errorResult = $view::renderError($e);
         }
