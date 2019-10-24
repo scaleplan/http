@@ -279,7 +279,7 @@ class Request extends AbstractRequest implements RequestInterface
     public function send() : RemoteResponse
     {
         $this->addHeader(Header::COOKIE, $this->getSerializeCookie());
-        $resource = curl_init('http://' . $this->url);
+        $resource = curl_init($this->url);
         try {
             curl_setopt($resource, CURLOPT_HTTPHEADER, $this->getSerializeHeaders());
             curl_setopt($resource, CURLOPT_UNRESTRICTED_AUTH, $this->isKeepAuthHeader);
