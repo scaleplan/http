@@ -319,4 +319,21 @@ class CurrentResponse implements CurrentResponseInterface
     {
         $this->cookie = $cookie;
     }
+
+    /**
+     * @param string $name
+     * @param $value
+     */
+    public function addCookie(string $name, $value) : void
+    {
+        $this->cookie[$name] = $value;
+    }
+
+    /**
+     * @param string $name
+     */
+    public function removeCookie(string $name) : void
+    {
+        unset($this->cookie[$name]);
+    }
 }

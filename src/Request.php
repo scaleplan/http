@@ -56,7 +56,7 @@ class Request extends AbstractRequest implements RequestInterface
      * @param string $url
      * @param array $params
      */
-    public function __construct(string $url, array $params = [])
+    public function __construct(string $url, $params = [])
     {
         $this->setUrl($url);
         $this->params = $params;
@@ -157,7 +157,7 @@ class Request extends AbstractRequest implements RequestInterface
     /**
      * @param array $params
      */
-    public function setParams(array $params) : void
+    public function setParams($params) : void
     {
         $this->params = $params;
     }
@@ -326,7 +326,6 @@ class Request extends AbstractRequest implements RequestInterface
                 && $attempts <= static::RETRY_COUNT
                 && !usleep(static::RETRY_TIMEOUT)
             );
-
 
             $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? $responseData, true);
 
