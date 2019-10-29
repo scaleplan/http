@@ -4,7 +4,6 @@ namespace Scaleplan\Http;
 
 use Lmc\HttpConstants\Header;
 use Scaleplan\DTO\DTO;
-use Scaleplan\DTO\Exceptions\ValidationException;
 use Scaleplan\Http\Constants\Methods;
 use Scaleplan\Http\Exceptions\ClassMustBeDTOException;
 use Scaleplan\Http\Exceptions\HttpException;
