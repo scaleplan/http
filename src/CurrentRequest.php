@@ -2,10 +2,12 @@
 
 namespace Scaleplan\Http;
 
+use Lmc\HttpConstants\Header;
 use Scaleplan\Helpers\FileHelper;
-use function Scaleplan\Helpers\get_env;
+use Scaleplan\Http\Constants\ContentTypes;
 use Scaleplan\Http\Interfaces\CurrentRequestInterface;
 use Scaleplan\Http\Interfaces\CurrentResponseInterface;
+use function Scaleplan\Helpers\get_env;
 
 /**
  * Class CurrentRequest
@@ -32,6 +34,11 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
     protected $response;
 
     /**
+     * @var string
+     */
+    protected $accept;
+
+    /**
      * CurrentRequest constructor.
      *
      * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
@@ -43,14 +50,29 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
     public function __construct()
     {
         $this->url = explode('?', $_SERVER['REQUEST_URI'])[0];
-        $this->setParams($_REQUEST);
+        $this->headers = getallheaders();
+
+        if (($this->headers[Header::CONTENT_TYPE] ?? '') === ContentTypes::JSON) {
+            $this->setParams(json_decode(file_get_contents('php://input'), true));
+        } else {
+            $this->setParams($_REQUEST);
+        }
+
         $this->isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
             && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === static::X_REQUESTED_WITH_VALUE;
 
         $this->method = $_SERVER['REQUEST_METHOD'];
         $this->session = $_SESSION;
         $this->cookie = $_COOKIE;
-        $this->headers = getallheaders();
+
+        if (!empty($this->headers[Header::ACCEPT])
+            && preg_match('/[,;]/', $this->headers[Header::ACCEPT], $matches, PREG_OFFSET_CAPTURE))
+        {
+            $separatorPos = $matches[0][1];
+            $this->accept = substr($this->headers[Header::ACCEPT], 0, $separatorPos);
+        } else {
+            $this->accept = ContentTypes::HTML;
+        }
 
         $this->response = new CurrentResponse($this);
 
@@ -63,6 +85,14 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
         foreach ($additionalHeaders as $header) {
             $this->cacheAdditionalParams[$header] = $_SERVER[$header] ?? null;
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function getAccept() : string
+    {
+        return $this->accept;
     }
 
     /**

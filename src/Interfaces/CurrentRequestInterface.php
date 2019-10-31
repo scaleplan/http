@@ -2,6 +2,8 @@
 
 namespace Scaleplan\Http\Interfaces;
 
+use Scaleplan\Http\CurrentResponse;
+
 /**
  * Class CurrentRequest
  *
@@ -9,6 +11,11 @@ namespace Scaleplan\Http\Interfaces;
  */
 interface CurrentRequestInterface extends AbstractRequestInterface
 {
+    /**
+     * @return string
+     */
+    public function getAccept() : string;
+
     /**
      * @return array
      */
@@ -22,7 +29,7 @@ interface CurrentRequestInterface extends AbstractRequestInterface
     public function getSessionVar($key);
 
     /**
-     * @return CurrentResponseInterface
+     * @return CurrentResponse
      */
     public function getResponse() : CurrentResponseInterface;
 
