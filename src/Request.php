@@ -238,13 +238,13 @@ class Request extends AbstractRequest implements RequestInterface
     }
 
     /**
-     * @param array $response
+     * @param $response
      *
      * @return DTO|null
      *
      * @throws \Scaleplan\DTO\Exceptions\ValidationException
      */
-    protected function buildDTO(array $response) : ?DTO
+    protected function buildDTO($response) : ?DTO
     {
         if ($this->dtoClass && \is_array($response)) {
             /** @var DTO $dto */
@@ -305,7 +305,7 @@ class Request extends AbstractRequest implements RequestInterface
                 }
 
                 $headerArray = explode(':', $header, 2);
-                if (count($header) < 2) {// ignore invalid headers
+                if (count($headerArray) < 2) {// ignore invalid headers
                     return $len;
                 }
 
