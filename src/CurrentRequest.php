@@ -66,10 +66,10 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
         $this->cookie = $_COOKIE;
 
         if (!empty($this->headers[Header::ACCEPT])
-            && preg_match('/[,;]/', $this->headers[Header::ACCEPT], $matches, PREG_OFFSET_CAPTURE))
+            && preg_match('/[,;]*/', $this->headers[Header::ACCEPT], $matches, PREG_OFFSET_CAPTURE))
         {
             $separatorPos = $matches[0][1];
-            $this->accept = substr($this->headers[Header::ACCEPT], 0, $separatorPos);
+            $this->accept = substr($this->headers[Header::ACCEPT], 0, $separatorPos ?: 256);
         } else {
             $this->accept = ContentTypes::HTML;
         }
