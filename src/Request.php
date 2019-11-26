@@ -326,6 +326,9 @@ class Request extends AbstractRequest implements RequestInterface
                 && !usleep(static::RETRY_TIMEOUT)
             );
 
+            //echo $responseData;
+            //exit;
+
             $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? $responseData, true);
 
             if (!static::codeIsOk($code)) {
