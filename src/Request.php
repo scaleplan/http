@@ -295,7 +295,7 @@ class Request extends AbstractRequest implements RequestInterface
             curl_setopt($resource, CURLOPT_CONNECTTIMEOUT_MS, static::DEFAULT_CONNECTION_TIMEOUT);
             curl_setopt($resource, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($resource, CURLOPT_FOLLOWLOCATION, static::ALLOW_REDIRECTS);
-            curl_setopt($resource, CURLOPT_FAILONERROR, true);
+            curl_setopt($resource, CURLOPT_FAILONERROR, false);
 
             $responseHeaders = [];
             curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function ($cURL, $header) use (&$responseHeaders) {
