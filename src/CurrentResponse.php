@@ -174,7 +174,7 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function buildError(\Throwable $e) : void
     {
-        if ($this->request->isAjax()) {
+        if ($this->request->getAccept() === ContentTypes::JSON) {
             $errorResult = new DbResult(
                 [
                     'code'    => $e->getCode(),
