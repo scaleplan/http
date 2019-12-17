@@ -52,11 +52,6 @@ interface RequestInterface
     public function setMethod(string $method) : void;
 
     /**
-     * @param string $url
-     */
-    public function setUrl(string $url) : void;
-
-    /**
      * @param array $params
      */
     public function setParams(array $params) : void;

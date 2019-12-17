@@ -35,4 +35,11 @@ interface CurrentRequestInterface extends AbstractRequestInterface
      * @return array
      */
     public function getCacheAdditionalParams() : array;
+
+    /**
+     * Вернуть URL запроса
+     *
+     * @return string
+     */
+    public function getURL() : string;
 }

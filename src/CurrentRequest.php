@@ -17,6 +17,13 @@ use function Scaleplan\Helpers\get_env;
 class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
 {
     /**
+     * URL запроса
+     *
+     * @var string
+     */
+    protected $url = '';
+
+    /**
      * Какие заголовки запроса учесть во время кэширования
      *
      * @var array
@@ -147,5 +154,15 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
     public function getCacheAdditionalParams() : array
     {
         return $this->cacheAdditionalParams;
+    }
+
+    /**
+     * Вернуть URL запроса
+     *
+     * @return string
+     */
+    public function getURL() : string
+    {
+        return $this->url;
     }
 }

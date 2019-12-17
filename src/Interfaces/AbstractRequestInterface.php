@@ -29,13 +29,6 @@ interface AbstractRequestInterface
     public function getCookie() : array;
 
     /**
-     * Вернуть URL запроса
-     *
-     * @return string
-     */
-    public function getURL() : string;
-
-    /**
      * Вернуть параметры запросы
      *
      * @return array

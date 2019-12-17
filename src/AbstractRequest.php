@@ -31,13 +31,6 @@ abstract class AbstractRequest implements AbstractRequestInterface
     protected $method = 'POST';
 
     /**
-     * URL запроса
-     *
-     * @var string
-     */
-    protected $url = '';
-
-    /**
      * Параметры запроса
      *
      * @var array
@@ -83,16 +76,6 @@ abstract class AbstractRequest implements AbstractRequestInterface
     public function getCookieVar($key)
     {
         return $this->cookie[$key] ?? null;
-    }
-
-    /**
-     * Вернуть URL запроса
-     *
-     * @return string
-     */
-    public function getURL() : string
-    {
-        return $this->url;
     }
 
     /**

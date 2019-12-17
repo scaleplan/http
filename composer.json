@@ -9,6 +9,12 @@
     "require": {
         "php": ">=7.0",
         "scaleplan/helpers": "dev-master",
-        "scaleplan/event": "dev-master"
+        "scaleplan/event": "dev-master",
+        "psr/http-message": "dev-master",
+        "guzzlehttp/psr7": "dev-master"
+    }
+    ,
+    "require-dev": {
+        "roave/security-advisories": "dev-master"
     }
 }

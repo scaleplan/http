@@ -1,8 +1,11 @@
 <?php
+declare(strict_types=1);
 
 namespace Scaleplan\Http;
 
+use GuzzleHttp\Psr7\Uri;
 use Lmc\HttpConstants\Header;
+use Psr\Http\Message\UriInterface;
 use Scaleplan\DTO\DTO;
 use Scaleplan\Http\Constants\Methods;
 use Scaleplan\Http\Exceptions\ClassMustBeDTOException;
@@ -50,15 +53,22 @@ class Request extends AbstractRequest implements RequestInterface
     protected $isKeepAuthHeader = true;
 
     /**
+     * @var UriInterface
+     */
+    protected $uri;
+
+    /**
      * Request constructor.
      *
      * @param string $url
      * @param array $params
+     *
+     * @throws \InvalidArgumentException
      */
     public function __construct(string $url, $params = [])
     {
-        $this->setUrl($url);
-        $this->params = $params;
+        $this->setUri(new Uri($url));
+        $this->setParams($params);
     }
 
     /**
@@ -146,17 +156,25 @@ class Request extends AbstractRequest implements RequestInterface
     }
 
     /**
-     * @param string $url
+     * @param UriInterface $uri
      */
-    public function setUrl(string $url) : void
+    public function setUri(UriInterface $uri) : void
     {
-        $this->url = strpos($url, '://') === false ? $_SERVER['HTTP_HOST'] . $url : $url;
+        $this->uri = $uri;
+    }
+
+    /**
+     * @return UriInterface
+     */
+    public function getUri() : UriInterface
+    {
+        return $this->uri;
     }
 
     /**
      * @param array $params
      */
-    public function setParams($params) : void
+    public function setParams(array $params) : void
     {
         $this->params = $params;
     }
@@ -271,6 +289,59 @@ class Request extends AbstractRequest implements RequestInterface
     }
 
     /**
+     * @return resource
+     */
+    protected function getCurlResource()
+    {
+        $resource = curl_init((string)$this->uri);
+        curl_setopt($resource, CURLOPT_HTTPHEADER, $this->getSerializeHeaders());
+        curl_setopt($resource, CURLOPT_UNRESTRICTED_AUTH, $this->isKeepAuthHeader);
+        $this->method === Methods::POST && $this->params && curl_setopt($resource, CURLOPT_POST, true);
+        if ($this->params) {
+            curl_setopt($resource, CURLOPT_POSTFIELDS, $this->params);
+        }
+
+        curl_setopt(
+            $resource,
+            CURLOPT_TIMEOUT_MS,
+            get_env(static::SERVICES_HTTP_TIMEOUT_ENV_NAME) ?? static::DEFAULT_TIMEOUT
+        );
+        curl_setopt($resource, CURLOPT_CONNECTTIMEOUT_MS, static::DEFAULT_CONNECTION_TIMEOUT);
+        curl_setopt($resource, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($resource, CURLOPT_FOLLOWLOCATION, static::ALLOW_REDIRECTS);
+        curl_setopt($resource, CURLOPT_FAILONERROR, false);
+
+        return $resource;
+    }
+
+    /**
+     * @param resource $resource
+     *
+     * @return array
+     */
+    protected static function setResponseHeadersBuilder($resource) : array
+    {
+        $responseHeaders = [];
+        curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function ($cURL, $header) use (&$responseHeaders) {
+            $len = strlen($header);
+            if (!$len) {
+                return $len;
+            }
+
+            $headerArray = explode(':', $header, 2);
+            if (count($headerArray) < 2) {// ignore invalid headers
+                return $len;
+            }
+
+            $responseHeaders[strtolower(trim($headerArray[0]))][] = trim($headerArray[1]);
+
+            return $len;
+        });
+
+        return $responseHeaders;
+    }
+
+    /**
      * @return RemoteResponse
      *
      * @throws \Throwable
@@ -278,42 +349,9 @@ class Request extends AbstractRequest implements RequestInterface
     public function send() : RemoteResponse
     {
         $this->addHeader(Header::COOKIE, $this->getSerializeCookie());
-        $resource = curl_init($this->url);
+        $resource = $this->getCurlResource();
         try {
-            curl_setopt($resource, CURLOPT_HTTPHEADER, $this->getSerializeHeaders());
-            curl_setopt($resource, CURLOPT_UNRESTRICTED_AUTH, $this->isKeepAuthHeader);
-            $this->method === Methods::POST && $this->params && curl_setopt($resource, CURLOPT_POST, true);
-            if ($this->params) {
-                curl_setopt($resource, CURLOPT_POSTFIELDS, $this->params);
-            }
-
-            curl_setopt(
-                $resource,
-                CURLOPT_TIMEOUT_MS,
-                get_env(static::SERVICES_HTTP_TIMEOUT_ENV_NAME) ?? static::DEFAULT_TIMEOUT
-            );
-            curl_setopt($resource, CURLOPT_CONNECTTIMEOUT_MS, static::DEFAULT_CONNECTION_TIMEOUT);
-            curl_setopt($resource, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($resource, CURLOPT_FOLLOWLOCATION, static::ALLOW_REDIRECTS);
-            curl_setopt($resource, CURLOPT_FAILONERROR, false);
-
-            $responseHeaders = [];
-            curl_setopt($resource, CURLOPT_HEADERFUNCTION, static function ($cURL, $header) use (&$responseHeaders) {
-                $len = strlen($header);
-                if (!$len) {
-                    return $len;
-                }
-
-                $headerArray = explode(':', $header, 2);
-                if (count($headerArray) < 2) {// ignore invalid headers
-                    return $len;
-                }
-
-                $responseHeaders[strtolower(trim($headerArray[0]))][] = trim($headerArray[1]);
-
-                return $len;
-            });
-
+            $responseHeaders = &static::setResponseHeadersBuilder($resource);
             $attempts = 0;
             $responseData = null;
             do {
@@ -326,13 +364,13 @@ class Request extends AbstractRequest implements RequestInterface
                 && !usleep(static::RETRY_TIMEOUT)
             );
 
-            //echo $responseData;
-            //exit;
+//            echo $responseData;
+//            exit;
 
             $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? $responseData, true);
 
             if (!static::codeIsOk($code)) {
-                $message = curl_error($resource);
+                $message = $result['message'] ?: curl_error($resource);
 
                 if ($code >= HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR) {
                     throw new RemoteServiceNotAvailableException($message);
@@ -354,6 +392,36 @@ class Request extends AbstractRequest implements RequestInterface
             $dto = $this->buildDTO($result);
 
             return new RemoteResponse($dto ?? $result, $code, $responseHeaders);
+        } catch (\Throwable $e) {
+            throw $e;
+        } finally {
+            curl_close($resource);
+        }
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    public function sendAsync() : void
+    {
+        $this->addHeader(Header::COOKIE, $this->getSerializeCookie());
+        $resource = $this->getCurlResource();
+        try {
+            $mh = curl_multi_init();
+            curl_multi_add_handle($mh, $resource);
+            $attempts = 0;
+            do {
+                $status = curl_multi_exec($mh, $active);
+                $attempts++;
+            } while (
+                $status !== CURLM_OK
+                && $attempts <= static::RETRY_COUNT
+                && !usleep(static::RETRY_TIMEOUT)
+            );
+
+            if ($status !== CURLM_OK) {
+                throw new HttpException(curl_error($resource));
+            }
         } catch (\Throwable $e) {
             throw $e;
         } finally {
