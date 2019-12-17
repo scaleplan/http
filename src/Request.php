@@ -160,6 +160,10 @@ class Request extends AbstractRequest implements RequestInterface
      */
     public function setUri(UriInterface $uri) : void
     {
+        if (isset($_SERVER['HTTP_HOST']) && !$uri->getHost()) {
+            $uri = $uri->withHost($_SERVER['HTTP_HOST']);
+        }
+
         $this->uri = $uri;
     }
 
