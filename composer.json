@@ -10,8 +10,8 @@
         "php": ">=7.0",
         "scaleplan/helpers": "dev-master",
         "scaleplan/event": "dev-master",
-        "psr/http-message": "dev-master",
-        "guzzlehttp/psr7": "dev-master"
+        "psr/http-message": "~1.0",
+        "guzzlehttp/psr7": "^1.6.1"
     }
     ,
     "require-dev": {
