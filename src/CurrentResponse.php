@@ -235,8 +235,8 @@ class CurrentResponse implements CurrentResponseInterface
         http_response_code($this->code);
 
         echo (string)$this->payload;
+        fastcgi_finish_request();
         dispatch_async(SendResponse::class, ['response' => $this]);
-        exit;
     }
 
     /**
