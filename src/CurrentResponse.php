@@ -19,7 +19,7 @@ use Scaleplan\Main\Interfaces\ViewInterface;
 use Scaleplan\Main\View;
 use Scaleplan\Result\DbResult;
 use function Scaleplan\DependencyInjection\get_required_static_container;
-use function Scaleplan\Event\dispatch_async;
+use function Scaleplan\Event\dispatch;
 use function Scaleplan\Helpers\get_required_env;
 
 /**
@@ -82,7 +82,7 @@ class CurrentResponse implements CurrentResponseInterface
 
         $this->buildRedirect(get_required_env('AUTH_PATH'));
 
-        dispatch_async(SendUnauthUserError::class, ['response' => $this]);
+        dispatch(SendUnauthUserError::class, ['response' => $this]);
     }
 
     /**
@@ -129,15 +129,15 @@ class CurrentResponse implements CurrentResponseInterface
     {
         if ($this->request->isAjax()) {
             $this->payload = \json_encode(['redirect' => $url], JSON_UNESCAPED_UNICODE);
+            $this->setContentType(ContentTypes::JSON);
         } else {
             $this->addHeader(Header::LOCATION, $url);
+            $this->setCode(HttpStatusCodes::HTTP_TEMPORARY_REDIRECT);
         }
-        $this->setCode(HttpStatusCodes::HTTP_TEMPORARY_REDIRECT);
 
         $this->send();
 
-        dispatch_async(SendRedirect::class, ['response' => $this]);
-
+        dispatch(SendRedirect::class, ['response' => $this]);
     }
 
     /**
@@ -154,7 +154,7 @@ class CurrentResponse implements CurrentResponseInterface
 
         $this->send();
 
-        dispatch_async(SendRedirect::class, ['response' => $this]);
+        dispatch(SendRedirect::class, ['response' => $this]);
     }
 
     /**
@@ -198,7 +198,7 @@ class CurrentResponse implements CurrentResponseInterface
         $this->setPayload($errorResult);
         $this->send();
 
-        dispatch_async(SendError::class, ['exception' => $e,]);
+        dispatch(SendError::class, ['exception' => $e,]);
     }
 
     /**
@@ -235,8 +235,8 @@ class CurrentResponse implements CurrentResponseInterface
         http_response_code($this->code);
 
         echo (string)$this->payload;
-        fastcgi_finish_request();
-        dispatch_async(SendResponse::class, ['response' => $this]);
+        //fastcgi_finish_request();
+        dispatch(SendResponse::class, ['response' => $this]);
     }
 
     /**
@@ -259,7 +259,7 @@ class CurrentResponse implements CurrentResponseInterface
         http_send_content_type(mime_content_type($filePath));
         http_throttle(0.1, 2048);
         http_send_file($filePath);
-        dispatch_async(SendFile::class, ['response' => $this]);
+        dispatch(SendFile::class, ['response' => $this]);
         exit;
     }
 
