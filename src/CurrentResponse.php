@@ -182,6 +182,7 @@ class CurrentResponse implements CurrentResponseInterface
                     'errors'  => method_exists($e, 'getErrors') ? $e->getErrors() : [],
                 ]
             );
+            $this->setContentType(ContentTypes::JSON);
         } else {
             /** @var View $view */
             $view = get_required_static_container(ViewInterface::class);

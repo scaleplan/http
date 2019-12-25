@@ -157,11 +157,17 @@ class Request extends AbstractRequest implements RequestInterface
 
     /**
      * @param UriInterface $uri
+     *
+     * @throws \InvalidArgumentException
      */
     public function setUri(UriInterface $uri) : void
     {
         if (isset($_SERVER['HTTP_HOST']) && !$uri->getHost()) {
             $uri = $uri->withHost($_SERVER['HTTP_HOST']);
+        }
+
+        if (!$uri->getScheme()) {
+            $uri = $uri->withScheme(empty($_SERVER['HTTPS']) ? 'http' : 'https');
         }
 
         $this->uri = $uri;
@@ -368,10 +374,10 @@ class Request extends AbstractRequest implements RequestInterface
                 && !usleep(static::RETRY_TIMEOUT)
             );
 
-//            echo $responseData;
+//            var_dump((string)$this->uri);
 //            exit;
 
-            $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? $responseData, true);
+            $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? $responseData ?: '', true);
 
             if (!static::codeIsOk($code)) {
                 $message = $result['message'] ?: curl_error($resource);
