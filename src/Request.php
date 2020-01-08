@@ -8,6 +8,7 @@ use Lmc\HttpConstants\Header;
 use Psr\Http\Message\UriInterface;
 use Scaleplan\DTO\DTO;
 use Scaleplan\Http\Constants\Methods;
+use Scaleplan\Http\Constants\Schemes;
 use Scaleplan\Http\Exceptions\ClassMustBeDTOException;
 use Scaleplan\Http\Exceptions\HttpException;
 use Scaleplan\Http\Exceptions\RemoteServiceNotAvailableException;
@@ -167,7 +168,7 @@ class Request extends AbstractRequest implements RequestInterface
         }
 
         if (!$uri->getScheme()) {
-            $uri = $uri->withScheme(empty($_SERVER['HTTPS']) ? 'http' : 'https');
+            $uri = $uri->withScheme(empty($_SERVER['HTTPS']) ? Schemes::HTTP : Schemes::HTTPS);
         }
 
         $this->uri = $uri;
