@@ -64,6 +64,7 @@ class CurrentResponse implements CurrentResponseInterface
     public function __construct(CurrentRequestInterface $request)
     {
         $this->request = $request;
+        $this->cookie = $_COOKIE;
     }
 
     /**
