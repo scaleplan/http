@@ -362,7 +362,7 @@ class Request extends AbstractRequest implements RequestInterface
         $this->addHeader(Header::COOKIE, $this->getSerializeCookie());
         $resource = $this->getCurlResource();
         try {
-            $responseHeaders = &static::setResponseHeadersBuilder($resource);
+            @$responseHeaders = &static::setResponseHeadersBuilder($resource);
             $attempts = 0;
             $responseData = null;
             do {
