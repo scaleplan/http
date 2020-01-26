@@ -59,6 +59,16 @@ class Request extends AbstractRequest implements RequestInterface
     protected $uri;
 
     /**
+     * @var string
+     */
+    protected $user;
+
+    /**
+     * @var string
+     */
+    protected $password;
+
+    /**
      * Request constructor.
      *
      * @param string $url
@@ -70,6 +80,24 @@ class Request extends AbstractRequest implements RequestInterface
     {
         $this->setUri(new Uri($url));
         $this->setParams($params);
+        $this->user = getenv('BASIC_USER');
+        $this->password = getenv('BASIC_PASSWORD');
+    }
+
+    /**
+     * @param string $user
+     */
+    public function setUser(string $user) : void
+    {
+        $this->user = $user;
+    }
+
+    /**
+     * @param string $password
+     */
+    public function setPassword(string $password) : void
+    {
+        $this->password = $password;
     }
 
     /**
@@ -321,6 +349,7 @@ class Request extends AbstractRequest implements RequestInterface
         curl_setopt($resource, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($resource, CURLOPT_FOLLOWLOCATION, static::ALLOW_REDIRECTS);
         curl_setopt($resource, CURLOPT_FAILONERROR, false);
+        curl_setopt($resource, CURLOPT_USERPWD, "{$this->user}:{$this->password}");
 
         return $resource;
     }
@@ -374,9 +403,6 @@ class Request extends AbstractRequest implements RequestInterface
                 && $attempts <= static::RETRY_COUNT
                 && !usleep(static::RETRY_TIMEOUT)
             );
-
-//            var_dump((string)$this->uri);
-//            exit;
 
             $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? $responseData ?: '', true);
 
