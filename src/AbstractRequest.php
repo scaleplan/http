@@ -57,7 +57,12 @@ abstract class AbstractRequest implements AbstractRequestInterface
      */
     public function getHeader(string $name)
     {
-        return $this->headers[$name] ?? null;
+        $headers = [];
+        foreach ($this->headers as $key => $value) {
+            $headers[strtolower($key)] = $value;
+        }
+
+        return $headers[strtolower($name)] ?? null;
     }
 
     /**
