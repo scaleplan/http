@@ -77,7 +77,7 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function redirectUnauthorizedUser(UserInterface $user) : void
     {
-        if (!$user->isGuest()) {
+        if ($user->getId()) {
             return;
         }
 
