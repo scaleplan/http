@@ -77,7 +77,7 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function redirectUnauthorizedUser(UserInterface $user) : void
     {
-        if (!$user->isGuest()) {
+        if ($user->getId()) {
             return;
         }
 
@@ -230,14 +230,20 @@ class CurrentResponse implements CurrentResponseInterface
             $name && $value && header("$name: $value");
         }
 
+        $domain = '';
+        if (!empty($_SERVER['HTTP_HOST'])) {
+            $hostParts = array_reverse(explode('.', $_SERVER['HTTP_HOST']));
+            $domain = ".{$hostParts[1]}.{$hostParts[0]}";
+        }
+
         foreach ($this->cookie as $key => $value) {
-            setcookie($key, $value);
+            setcookie($key, $value, 0, '/', $domain);
         }
 
         http_response_code($this->code);
 
         echo (string)$this->payload;
-        //fastcgi_finish_request();
+        fastcgi_finish_request();
         dispatch(SendResponse::class, ['response' => $this]);
     }
 
