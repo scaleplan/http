@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace Scaleplan\Http;
 
@@ -64,7 +65,7 @@ class CurrentResponse implements CurrentResponseInterface
     public function __construct(CurrentRequestInterface $request)
     {
         $this->request = $request;
-        $this->cookie = $_COOKIE;
+        //$this->cookie = $_COOKIE;
     }
 
     /**
@@ -218,6 +219,11 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function send() : void
     {
+        static $send;
+        if ($send) {
+            return;
+        }
+
         $i = 0;
         while ($i < ob_get_level()) {
             ob_end_clean();
@@ -237,7 +243,7 @@ class CurrentResponse implements CurrentResponseInterface
         }
 
         foreach ($this->cookie as $key => $value) {
-            setcookie($key, $value, 0, '/', $domain);
+            setcookie($key, (string)$value, 0, '/', $domain);
         }
 
         http_response_code($this->code);
@@ -245,6 +251,7 @@ class CurrentResponse implements CurrentResponseInterface
         echo (string)$this->payload;
         fastcgi_finish_request();
         dispatch(SendResponse::class, ['response' => $this]);
+        $send = 1;
     }
 
     /**
