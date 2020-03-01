@@ -26,7 +26,7 @@ class Request extends AbstractRequest implements RequestInterface
     public const SERVICES_HTTP_TIMEOUT_ENV_NAME = 'SERVICES_HTTP_TIMEOUT';
 
     public const DEFAULT_CONNECTION_TIMEOUT = 500;
-    public const DEFAULT_TIMEOUT            = 2000;
+    public const DEFAULT_TIMEOUT            = 5000;
     public const RETRY_COUNT                = 1;
     public const RETRY_TIMEOUT              = 10000;
     public const ALLOW_REDIRECTS            = true;
