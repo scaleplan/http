@@ -7,6 +7,8 @@ use GuzzleHttp\Psr7\Uri;
 use Lmc\HttpConstants\Header;
 use Psr\Http\Message\UriInterface;
 use Scaleplan\DTO\DTO;
+use Scaleplan\DTO\Exceptions\ValidationException;
+use Scaleplan\Http\Constants\ContentTypes;
 use Scaleplan\Http\Constants\Methods;
 use Scaleplan\Http\Constants\Schemes;
 use Scaleplan\Http\Exceptions\ClassMustBeDTOException;
@@ -67,6 +69,13 @@ class Request extends AbstractRequest implements RequestInterface
      * @var string
      */
     protected $password;
+
+    /**
+     * Метод запроса
+     *
+     * @var string
+     */
+    protected $method = 'GET';
 
     /**
      * Request constructor.
@@ -335,9 +344,20 @@ class Request extends AbstractRequest implements RequestInterface
         $resource = curl_init((string)$this->uri);
         curl_setopt($resource, CURLOPT_HTTPHEADER, $this->getSerializeHeaders());
         curl_setopt($resource, CURLOPT_UNRESTRICTED_AUTH, $this->isKeepAuthHeader);
-        $this->method === Methods::POST && $this->params && curl_setopt($resource, CURLOPT_POST, true);
-        if ($this->params) {
-            curl_setopt($resource, CURLOPT_POSTFIELDS, $this->params);
+        if ($this->method === Methods::POST) {
+            curl_setopt($resource, CURLOPT_POST, true);
+            if ($this->params) {
+                $params = $this->params;
+                if ($this->getHeader(Header::CONTENT_TYPE) === ContentTypes::JSON) {
+                    $params = json_encode($params, JSON_OBJECT_AS_ARRAY | JSON_NUMERIC_CHECK | JSON_UNESCAPED_SLASHES
+                        | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
+                }
+
+                curl_setopt($resource, CURLOPT_POSTFIELDS, $params);
+            }
+        } else {
+            curl_setopt($resource, CURLOPT_CUSTOMREQUEST, $this->method);
+            curl_setopt($resource, CURLOPT_URL, $this->uri->withQuery(http_build_query($this->params)));
         }
 
         curl_setopt(
@@ -411,6 +431,10 @@ class Request extends AbstractRequest implements RequestInterface
 
                 if ($code >= HttpStatusCodes::HTTP_INTERNAL_SERVER_ERROR) {
                     throw new RemoteServiceNotAvailableException($message);
+                }
+
+                if ($code === HttpStatusCodes::HTTP_UNPROCESSABLE_ENTITY) {
+                    throw new ValidationException($result['errors'], $message);
                 }
 
                 if ($code >= HttpStatusCodes::HTTP_BAD_REQUEST && $result) {
