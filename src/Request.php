@@ -3,9 +3,7 @@ declare(strict_types=1);
 
 namespace Scaleplan\Http;
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Uri;
-use GuzzleHttp\RequestOptions;
 use Lmc\HttpConstants\Header;
 use Psr\Http\Message\UriInterface;
 use Scaleplan\DTO\DTO;
@@ -411,7 +409,6 @@ class Request extends AbstractRequest implements RequestInterface
         if ($this->getCookie()) {
             $this->addHeader(Header::SET_COOKIE, $this->getSerializeCookie());
         }
-
         $resource = $this->getCurlResource();
         try {
             @$responseHeaders = &static::setResponseHeadersBuilder($resource);
