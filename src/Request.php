@@ -408,7 +408,7 @@ class Request extends AbstractRequest implements RequestInterface
      */
     public function send() : RemoteResponse
     {
-        $this->addHeader(Header::COOKIE, $this->getSerializeCookie());
+        $this->addHeader(Header::SET_COOKIE, $this->getSerializeCookie());
         $resource = $this->getCurlResource();
         try {
             @$responseHeaders = &static::setResponseHeadersBuilder($resource);
