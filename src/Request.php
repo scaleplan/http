@@ -3,17 +3,17 @@ declare(strict_types=1);
 
 namespace Scaleplan\Http;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\RequestOptions;
 use Lmc\HttpConstants\Header;
 use Psr\Http\Message\UriInterface;
 use Scaleplan\DTO\DTO;
-use Scaleplan\DTO\Exceptions\ValidationException;
 use Scaleplan\Http\Constants\ContentTypes;
 use Scaleplan\Http\Constants\Methods;
 use Scaleplan\Http\Constants\Schemes;
 use Scaleplan\Http\Exceptions\ClassMustBeDTOException;
 use Scaleplan\Http\Exceptions\HttpException;
-use Scaleplan\Http\Exceptions\RemoteServiceNotAvailableException;
 use Scaleplan\Http\Interfaces\RequestInterface;
 use Scaleplan\HttpStatus\HttpStatusCodes;
 use function Scaleplan\Helpers\get_env;
@@ -53,7 +53,7 @@ class Request extends AbstractRequest implements RequestInterface
     /**
      * @var bool
      */
-    protected $isKeepAuthHeader = true;
+    protected $isKeepAuthHeader = false;
 
     /**
      * @var UriInterface
@@ -295,7 +295,7 @@ class Request extends AbstractRequest implements RequestInterface
      */
     protected function getSerializeHeaders() : array
     {
-        $headers = $this->headers;
+        $headers = $this->headers ?? [];
         array_walk($headers, static function (&$value, $key) {
             $value = "$key: $value";
         });
@@ -408,7 +408,10 @@ class Request extends AbstractRequest implements RequestInterface
      */
     public function send() : RemoteResponse
     {
-        $this->addHeader(Header::COOKIE, $this->getSerializeCookie());
+        if ($this->getCookie()) {
+            $this->addHeader(Header::SET_COOKIE, $this->getSerializeCookie());
+        }
+
         $resource = $this->getCurlResource();
         try {
             @$responseHeaders = &static::setResponseHeadersBuilder($resource);
