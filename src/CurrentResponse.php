@@ -129,7 +129,7 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function buildRedirect(string $url) : void
     {
-        if ($this->request->isAjax()) {
+        if ($this->request->isAjax() && $this->request->getAccept() === ContentTypes::JSON) {
             $this->payload = \json_encode(['redirect' => $url], JSON_UNESCAPED_UNICODE);
             $this->setContentType(ContentTypes::JSON);
         } else {
@@ -176,7 +176,7 @@ class CurrentResponse implements CurrentResponseInterface
      */
     public function buildError(\Throwable $e) : void
     {
-        if ($this->request->getAccept() === ContentTypes::JSON) {
+        if ($this->request->getAccept() === ContentTypes::JSON || $this->request->isAjax()) {
             $errorResult = new DbResult(
                 [
                     'code'    => $e->getCode(),
