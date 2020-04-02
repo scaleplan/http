@@ -166,4 +166,12 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
     {
         return $this->url;
     }
+
+    /**
+     * @return string
+     */
+    public static function getScheme() : string
+    {
+        return !empty($_SERVER['HTTPS']) ? 'https' : 'http';
+    }
 }
