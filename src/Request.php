@@ -7,11 +7,13 @@ use GuzzleHttp\Psr7\Uri;
 use Lmc\HttpConstants\Header;
 use Psr\Http\Message\UriInterface;
 use Scaleplan\DTO\DTO;
+use Scaleplan\DTO\Exceptions\ValidationException;
 use Scaleplan\Http\Constants\ContentTypes;
 use Scaleplan\Http\Constants\Methods;
 use Scaleplan\Http\Constants\Schemes;
 use Scaleplan\Http\Exceptions\ClassMustBeDTOException;
 use Scaleplan\Http\Exceptions\HttpException;
+use Scaleplan\Http\Exceptions\RemoteServiceNotAvailableException;
 use Scaleplan\Http\Interfaces\RequestInterface;
 use Scaleplan\HttpStatus\HttpStatusCodes;
 use function Scaleplan\Helpers\get_env;
@@ -306,7 +308,7 @@ class Request extends AbstractRequest implements RequestInterface
      *
      * @return DTO|null
      *
-     * @throws \Scaleplan\DTO\Exceptions\ValidationException
+     * @throws ValidationException
      */
     protected function buildDTO($response) : ?DTO
     {
