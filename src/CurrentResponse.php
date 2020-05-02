@@ -180,7 +180,7 @@ class CurrentResponse implements CurrentResponseInterface
             $errorResult = new DbResult(
                 [
                     'code'    => $e->getCode(),
-                    'message' => iconv('UTF-8', 'UTF-8//IGNORE', $e->getMessage()),
+                    'message' => @iconv('UTF-8', 'UTF-8//IGNORE', $e->getMessage()),
                     'errors'  => method_exists($e, 'getErrors') ? $e->getErrors() : [],
                 ]
             );
