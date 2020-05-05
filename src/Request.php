@@ -89,8 +89,8 @@ class Request extends AbstractRequest implements RequestInterface
     {
         $this->setUri(new Uri($url));
         $this->setParams($params);
-        $this->user = getenv('BASIC_USER');
-        $this->password = getenv('BASIC_PASSWORD');
+        $this->user = get_env('BASIC_USER');
+        $this->password = get_env('BASIC_PASSWORD');
     }
 
     /**
@@ -357,7 +357,7 @@ class Request extends AbstractRequest implements RequestInterface
             }
         } else {
             curl_setopt($resource, CURLOPT_CUSTOMREQUEST, $this->method);
-            curl_setopt($resource, CURLOPT_URL, $this->uri->withQuery(http_build_query($this->params)));
+            curl_setopt($resource, CURLOPT_URL, (string)$this->uri->withQuery(http_build_query($this->params)));
         }
 
         curl_setopt(
@@ -369,7 +369,9 @@ class Request extends AbstractRequest implements RequestInterface
         curl_setopt($resource, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($resource, CURLOPT_FOLLOWLOCATION, static::ALLOW_REDIRECTS);
         curl_setopt($resource, CURLOPT_FAILONERROR, false);
-        curl_setopt($resource, CURLOPT_USERPWD, "{$this->user}:{$this->password}");
+        if ($this->user && $this->password) {
+            curl_setopt($resource, CURLOPT_USERPWD, "{$this->user}:{$this->password}");
+        }
 
         return $resource;
     }
