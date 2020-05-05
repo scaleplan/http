@@ -300,7 +300,7 @@ class Request extends AbstractRequest implements RequestInterface
             $value = "$key: $value";
         });
 
-        return $headers;
+        return array_values($headers);
     }
 
     /**
@@ -411,7 +411,7 @@ class Request extends AbstractRequest implements RequestInterface
     public function send() : RemoteResponse
     {
         if ($this->getCookie()) {
-            $this->addHeader(Header::SET_COOKIE, $this->getSerializeCookie());
+            $this->addHeader(Header::COOKIE, $this->getSerializeCookie());
         }
         $resource = $this->getCurlResource();
         try {
