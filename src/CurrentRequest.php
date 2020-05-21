@@ -44,14 +44,12 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
     /**
      * @var string
      */
-    protected $accept;
+    protected $accept = ContentTypes::HTML;
 
     /**
      * CurrentRequest constructor.
      *
      * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
-     * @throws \Scaleplan\Helpers\Exceptions\FileSaveException
-     * @throws \Scaleplan\Helpers\Exceptions\FileUploadException
      * @throws \Scaleplan\Helpers\Exceptions\HelperException
      * @throws \Throwable
      */
@@ -77,8 +75,6 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
 
             if (!empty($this->headers[Header::ACCEPT])) {
                 $this->accept = preg_split('/[,;]/', $this->headers[Header::ACCEPT])[0];
-            } else {
-                $this->accept = ContentTypes::HTML;
             }
 
             $denyParams = array_map('trim', explode(',', get_env('DENY_PARAMS') ?? ''));
