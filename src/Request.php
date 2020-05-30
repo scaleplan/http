@@ -438,7 +438,7 @@ class Request extends AbstractRequest implements RequestInterface
                 }
 
                 if ($code === HttpStatusCodes::HTTP_UNPROCESSABLE_ENTITY) {
-                    throw new ValidationException($result['errors'], $message);
+                    throw new ValidationException($result[static::RESPONSE_ERRORS_SECTION_NAME] ?? [], $message);
                 }
 
                 if ($code >= HttpStatusCodes::HTTP_BAD_REQUEST && $result) {
