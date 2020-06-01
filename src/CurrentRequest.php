@@ -56,6 +56,11 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
     public function __construct()
     {
         $this->response = new CurrentResponse($this);
+
+        if (!isset($_SERVER['REQUEST_URI'])) {
+            return;
+        }
+
         try {
             $this->url = explode('?', $_SERVER['REQUEST_URI'])[0];
             $this->headers = getallheaders();
