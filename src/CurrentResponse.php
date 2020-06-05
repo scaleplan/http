@@ -12,6 +12,7 @@ use Scaleplan\Http\Hooks\SendFile;
 use Scaleplan\Http\Hooks\SendRedirect;
 use Scaleplan\Http\Hooks\SendResponse;
 use Scaleplan\Http\Hooks\SendUnauthUserError;
+use Scaleplan\Http\Interfaces\AbstractRequestInterface;
 use Scaleplan\Http\Interfaces\CurrentRequestInterface;
 use Scaleplan\Http\Interfaces\CurrentResponseInterface;
 use Scaleplan\HttpStatus\HttpStatusCodes;
@@ -157,6 +158,63 @@ class CurrentResponse implements CurrentResponseInterface
         $this->send();
 
         dispatch(SendRedirect::class, ['response' => $this]);
+    }
+
+    /**
+     * @param \Throwable $e
+     *
+     * @throws \PhpQuery\Exceptions\PhpQueryException
+     * @throws \ReflectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ContainerNotFoundException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ContainerTypeNotSupportingException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\DependencyInjectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ParameterMustBeInterfaceNameOrClassNameException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ReturnTypeMustImplementsInterfaceException
+     * @throws \Scaleplan\Event\Exceptions\ClassNotImplementsEventInterfaceException
+     * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
+     * @throws \Scaleplan\Result\Exceptions\ResultException
+     * @throws \Scaleplan\Templater\Exceptions\DomElementNotFountException
+     */
+    public static function sendError(\Throwable $e) : void
+    {
+        $headers = getallheaders();
+        $accept = preg_split('/[,;]/', $headers[Header::ACCEPT] ?? '')[0] ?? ContentTypes::HTML;
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === AbstractRequestInterface::X_REQUESTED_WITH_VALUE;
+
+        if ($accept === ContentTypes::JSON || $isAjax) {
+            $errorResult = new DbResult(
+                [
+                    'code'    => $e->getCode(),
+                    'message' => @iconv('UTF-8', 'UTF-8//IGNORE', $e->getMessage()),
+                    'errors'  => method_exists($e, 'getErrors') ? $e->getErrors() : [],
+                ]
+            );
+            $contentType = ContentTypes::JSON;
+        } else {
+            /** @var View $view */
+            $view = get_required_static_container(ViewInterface::class);
+            $errorResult = $view::renderError($e);
+            $contentType = ContentTypes::HTML;
+        }
+
+        $i = 0;
+        while ($i < ob_get_level()) {
+            ob_end_clean();
+            $i++;
+        }
+
+        $code = $e->getCode();
+        if (\in_array($code, HttpStatusCodes::ERROR_CODES, true)) {
+            http_response_code($code);
+        } else {
+            http_response_code(HttpException::CODE);
+        }
+
+        \header(Header::CONTENT_TYPE . ": $contentType");
+        echo (string)$errorResult;
+
+        dispatch(SendError::class, ['exception' => $e,]);
     }
 
     /**

@@ -61,39 +61,35 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
             return;
         }
 
-//        try {
-            $this->url = explode('?', $_SERVER['REQUEST_URI'])[0];
-            $this->headers = getallheaders();
+        $this->url = explode('?', $_SERVER['REQUEST_URI'])[0];
+        $this->headers = getallheaders();
 
-            if (($this->headers[Header::CONTENT_TYPE] ?? '') === ContentTypes::JSON) {
-                $this->setParams(json_decode(file_get_contents('php://input'), true));
-            } else {
-                $this->setParams($_REQUEST);
-            }
+        if (($this->headers[Header::CONTENT_TYPE] ?? '') === ContentTypes::JSON) {
+            $this->setParams(json_decode(file_get_contents('php://input'), true));
+        } else {
+            $this->setParams($_REQUEST);
+        }
 
-            $this->isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
-                && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === static::X_REQUESTED_WITH_VALUE;
+        $this->isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === static::X_REQUESTED_WITH_VALUE;
 
-            $this->method = $_SERVER['REQUEST_METHOD'];
-            $this->session = $_SESSION;
-            $this->cookie = $_COOKIE;
+        $this->method = $_SERVER['REQUEST_METHOD'];
+        $this->session = $_SESSION;
+        $this->cookie = $_COOKIE;
 
-            if (!empty($this->headers[Header::ACCEPT])) {
-                $this->accept = preg_split('/[,;]/', $this->headers[Header::ACCEPT])[0];
-            }
+        if (!empty($this->headers[Header::ACCEPT])) {
+            $this->accept = preg_split('/[,;]/', $this->headers[Header::ACCEPT])[0];
+        }
 
-            $denyParams = array_map('trim', explode(',', get_env('DENY_PARAMS') ?? ''));
-            foreach ($denyParams as $denyParam) {
-                unset($this->params[$denyParam]);
-            }
+        $denyParams = array_map('trim', explode(',', get_env('DENY_PARAMS') ?? ''));
+        foreach ($denyParams as $denyParam) {
+            unset($this->params[$denyParam]);
+        }
 
-            $additionalHeaders = array_map('trim', explode(',', get_env('CACHE_ADDITIONAL_HEADERS') ?? ''));
-            foreach ($additionalHeaders as $header) {
-                $this->cacheAdditionalParams[$header] = $_SERVER[$header] ?? null;
-            }
-//        } catch (\Throwable $e) {
-//            $this->response->buildError($e);
-//        }
+        $additionalHeaders = array_map('trim', explode(',', get_env('CACHE_ADDITIONAL_HEADERS') ?? ''));
+        foreach ($additionalHeaders as $header) {
+            $this->cacheAdditionalParams[$header] = $_SERVER[$header] ?? null;
+        }
     }
 
     /**
