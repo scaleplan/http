@@ -61,7 +61,7 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
             return;
         }
 
-        try {
+//        try {
             $this->url = explode('?', $_SERVER['REQUEST_URI'])[0];
             $this->headers = getallheaders();
 
@@ -91,9 +91,9 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
             foreach ($additionalHeaders as $header) {
                 $this->cacheAdditionalParams[$header] = $_SERVER[$header] ?? null;
             }
-        } catch (\Throwable $e) {
-            $this->response->buildError($e);
-        }
+//        } catch (\Throwable $e) {
+//            $this->response->buildError($e);
+//        }
     }
 
     /**
