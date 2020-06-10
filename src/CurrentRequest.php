@@ -74,8 +74,8 @@ class CurrentRequest extends AbstractRequest implements CurrentRequestInterface
             && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === static::X_REQUESTED_WITH_VALUE;
 
         $this->method = $_SERVER['REQUEST_METHOD'];
-        $this->session = $_SESSION;
-        $this->cookie = $_COOKIE;
+        $this->session = $_SESSION ?? [];
+        $this->cookie = $_COOKIE ?? [];
 
         if (!empty($this->headers[Header::ACCEPT])) {
             $this->accept = preg_split('/[,;]/', $this->headers[Header::ACCEPT])[0];
