@@ -322,7 +322,7 @@ class CurrentResponse implements CurrentResponseInterface
     public function sendFile(string $filePath) : void
     {
         if (!file_exists($filePath)) {
-            throw new NotFoundException("File $filePath not found.");
+            throw new NotFoundException("Файл $filePath не найден.");
         }
 
         $this->setContentType(mime_content_type($filePath));

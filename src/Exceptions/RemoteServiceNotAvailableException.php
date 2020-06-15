@@ -11,6 +11,6 @@ use Scaleplan\HttpStatus\HttpStatusCodes;
  */
 class RemoteServiceNotAvailableException extends HttpException
 {
-    public const MESSAGE = 'Remote service not available.';
+    public const MESSAGE = 'Удаленный сервис не доступен.';
     public const CODE = HttpStatusCodes::ORIGIN_IS_UNREACHABLE;
 }

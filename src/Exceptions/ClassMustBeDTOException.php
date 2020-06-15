@@ -12,7 +12,7 @@ use Scaleplan\HttpStatus\HttpStatusCodes;
  */
 class ClassMustBeDTOException extends \Exception
 {
-    public const MESSAGE = 'Class must be subclass of ' . DTO::class . '.';
+    public const MESSAGE = 'Класс должен быть подклассом ' . DTO::class . '.';
     public const CODE = HttpStatusCodes::HTTP_UNPROCESSABLE_ENTITY;
 
     /**

@@ -9,5 +9,5 @@ namespace Scaleplan\Http\Exceptions;
  */
 class InvalidUrlException extends HttpException
 {
-    public const MESSAGE = 'Invalid url received.';
+    public const MESSAGE = 'Получен неверный URL.';
 }
