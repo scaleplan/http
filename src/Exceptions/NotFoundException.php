@@ -11,6 +11,6 @@ use Scaleplan\HttpStatus\HttpStatusCodes;
  */
 class NotFoundException extends HttpException
 {
-    public const MESSAGE = 'Не найдено.';
+    public const MESSAGE = 'http.not-found';
     public const CODE = HttpStatusCodes::HTTP_NOT_FOUND;
 }

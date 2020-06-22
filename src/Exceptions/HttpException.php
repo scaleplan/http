@@ -3,6 +3,7 @@
 namespace Scaleplan\Http\Exceptions;
 
 use Scaleplan\HttpStatus\HttpStatusCodes;
+use function Scaleplan\Translator\translate;
 
 /**
  * Class HttpException
@@ -11,7 +12,7 @@ use Scaleplan\HttpStatus\HttpStatusCodes;
  */
 class HttpException extends \Exception
 {
-    public const MESSAGE = 'Ошибка HTTP-транспорта.';
+    public const MESSAGE = 'http.http-error';
     public const CODE = HttpStatusCodes::HTTP_BAD_REQUEST;
 
     /**
@@ -23,12 +24,21 @@ class HttpException extends \Exception
      * HttpException constructor.
      *
      * @param string $message
-     * @param int|null $code
+     * @param int $code
      * @param array|null $errors
+     *
+     * @throws \ReflectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ContainerTypeNotSupportingException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\DependencyInjectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ParameterMustBeInterfaceNameOrClassNameException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ReturnTypeMustImplementsInterfaceException
      */
     public function __construct(string $message = '', int $code = 0, array $errors = null)
     {
         $this->errors = $errors;
-        parent::__construct($message ?: static::MESSAGE, $code ?: static::CODE);
+        parent::__construct(
+            $message ?: translate(static::MESSAGE) ?: static::MESSAGE,
+            $code ?: static::CODE
+        );
     }
 }

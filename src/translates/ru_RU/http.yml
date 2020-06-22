@@ -1,0 +1,8 @@
+file-not-found: Файл :file-path не найден.
+class-must-inherits-dto: Класс должен быть подклассом класса DTO.
+access-denied: Доступ запрещен.
+http-error: Ошибка HTTP-транспорта.
+corrupted-file: Битый файл.
+wrong-url: Получен неверный URL.
+not-found: Не найдено.
+remote-server-not-available: Удаленный сервис не доступен.

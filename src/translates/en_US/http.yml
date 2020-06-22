@@ -1,0 +1,8 @@
+file-not-found: File :file-path not found.
+class-must-inherits-dto: Class must be inherited from DTO.
+access-denied: Access denied.
+http-error: HTTP transport error.
+corrupted-file: File is corrupted.
+wrong-url: Wrong URL received.
+not-found: Not found.
+remote-server-not-available: Remote service not available.

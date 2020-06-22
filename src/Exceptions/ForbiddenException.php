@@ -11,6 +11,6 @@ use Scaleplan\HttpStatus\HttpStatusCodes;
  */
 class ForbiddenException extends HttpException
 {
-    public const MESSAGE = 'Доступ запрещен.';
+    public const MESSAGE = 'http.access-denied';
     public const CODE = HttpStatusCodes::HTTP_FORBIDDEN;
 }

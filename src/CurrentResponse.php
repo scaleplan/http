@@ -23,6 +23,7 @@ use Scaleplan\Result\DbResult;
 use function Scaleplan\DependencyInjection\get_required_static_container;
 use function Scaleplan\Event\dispatch;
 use function Scaleplan\Helpers\get_required_env;
+use function Scaleplan\Translator\translate;
 
 /**
  * Ответ от сервера
@@ -316,13 +317,17 @@ class CurrentResponse implements CurrentResponseInterface
      * @param string $filePath
      *
      * @throws NotFoundException
-     *
+     * @throws \ReflectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ContainerTypeNotSupportingException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\DependencyInjectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ParameterMustBeInterfaceNameOrClassNameException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ReturnTypeMustImplementsInterfaceException
      * @throws \Scaleplan\Event\Exceptions\ClassNotImplementsEventInterfaceException
      */
     public function sendFile(string $filePath) : void
     {
         if (!file_exists($filePath)) {
-            throw new NotFoundException("Файл $filePath не найден.");
+            throw new NotFoundException(translate('http.file-not-found', ['file-path' => $filePath,]));
         }
 
         $this->setContentType(mime_content_type($filePath));

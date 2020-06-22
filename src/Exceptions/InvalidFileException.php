@@ -9,5 +9,5 @@ namespace Scaleplan\Http\Exceptions;
  */
 class InvalidFileException extends HttpException
 {
-    public const MESSAGE = 'Битый файл.';
+    public const MESSAGE = 'http.corrupted-file';
 }
