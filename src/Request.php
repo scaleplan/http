@@ -77,6 +77,8 @@ class Request extends AbstractRequest implements RequestInterface
      */
     protected $method = 'GET';
 
+    protected $responseResultSection;
+
     /**
      * Request constructor.
      *
@@ -91,6 +93,23 @@ class Request extends AbstractRequest implements RequestInterface
         $this->setParams($params);
         $this->user = get_env('BASIC_USER');
         $this->password = get_env('BASIC_PASSWORD');
+        $this->responseResultSection = static::RESPONSE_RESULT_SECTION_NAME;
+    }
+
+    /**
+     * @return string
+     */
+    public function getResponseResultSection() : ?string
+    {
+        return $this->responseResultSection;
+    }
+
+    /**
+     * @param string $responseResultSection
+     */
+    public function setResponseResultSection(?string $responseResultSection) : void
+    {
+        $this->responseResultSection = $responseResultSection;
     }
 
     /**
@@ -428,7 +447,10 @@ class Request extends AbstractRequest implements RequestInterface
                 && !usleep(static::RETRY_TIMEOUT)
             );
 
-            $result = json_decode($responseData[static::RESPONSE_RESULT_SECTION_NAME] ?? $responseData ?: '', true);
+            $dataToDecode = $this->responseResultSection && isset($responseData[$this->responseResultSection])
+                ? $responseData[$this->responseResultSection]
+                : $responseData;
+            $result = json_decode($dataToDecode ?: '', true);
 
             if (!static::codeIsOk($code)) {
                 $message = $result['message'] ?: curl_error($resource);
