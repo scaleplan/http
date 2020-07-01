@@ -75,6 +75,11 @@ class CurrentResponse implements CurrentResponseInterface
      *
      * @param UserInterface $user
      *
+     * @throws \ReflectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ContainerTypeNotSupportingException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\DependencyInjectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ParameterMustBeInterfaceNameOrClassNameException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ReturnTypeMustImplementsInterfaceException
      * @throws \Scaleplan\Event\Exceptions\ClassNotImplementsEventInterfaceException
      * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
      */
@@ -175,6 +180,7 @@ class CurrentResponse implements CurrentResponseInterface
      * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
      * @throws \Scaleplan\Result\Exceptions\ResultException
      * @throws \Scaleplan\Templater\Exceptions\DomElementNotFoundException
+     * @throws \Scaleplan\Templater\Exceptions\DomElementNotFountException
      */
     public static function sendError(\Throwable $e) : void
     {
@@ -232,6 +238,7 @@ class CurrentResponse implements CurrentResponseInterface
      * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
      * @throws \Scaleplan\Result\Exceptions\ResultException
      * @throws \Scaleplan\Templater\Exceptions\DomElementNotFoundException
+     * @throws \Scaleplan\Templater\Exceptions\DomElementNotFountException
      */
     public function buildError(\Throwable $e) : void
     {
