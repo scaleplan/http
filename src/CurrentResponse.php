@@ -180,7 +180,6 @@ class CurrentResponse implements CurrentResponseInterface
      * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
      * @throws \Scaleplan\Result\Exceptions\ResultException
      * @throws \Scaleplan\Templater\Exceptions\DomElementNotFoundException
-     * @throws \Scaleplan\Templater\Exceptions\DomElementNotFountException
      */
     public static function sendError(\Throwable $e) : void
     {
@@ -238,7 +237,6 @@ class CurrentResponse implements CurrentResponseInterface
      * @throws \Scaleplan\Helpers\Exceptions\EnvNotFoundException
      * @throws \Scaleplan\Result\Exceptions\ResultException
      * @throws \Scaleplan\Templater\Exceptions\DomElementNotFoundException
-     * @throws \Scaleplan\Templater\Exceptions\DomElementNotFountException
      */
     public function buildError(\Throwable $e) : void
     {
