@@ -77,6 +77,9 @@ class Request extends AbstractRequest implements RequestInterface
      */
     protected $method = 'GET';
 
+    /**
+     * @var string
+     */
     protected $responseResultSection;
 
     /**
@@ -172,6 +175,11 @@ class Request extends AbstractRequest implements RequestInterface
      * @param string|null $dtoClass
      *
      * @throws ClassMustBeDTOException
+     * @throws \ReflectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ContainerTypeNotSupportingException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\DependencyInjectionException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ParameterMustBeInterfaceNameOrClassNameException
+     * @throws \Scaleplan\DependencyInjection\Exceptions\ReturnTypeMustImplementsInterfaceException
      */
     public function setDtoClass(?string $dtoClass) : void
     {
