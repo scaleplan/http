@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Scaleplan\Http;
 
 use Lmc\HttpConstants\Header;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 use Scaleplan\Http\Constants\ContentTypes;
 use Scaleplan\Http\Exceptions\HttpException;
 use Scaleplan\Http\Exceptions\NotFoundException;
@@ -32,10 +34,10 @@ use function Scaleplan\Translator\translate;
  *
  * @package Scaleplan\Http
  */
-class CurrentResponse implements CurrentResponseInterface
+class CurrentResponse implements CurrentResponseInterface, ResponseInterface
 {
     /**
-     * @var CurrentRequestInterface
+     * @var CurrentRequest
      */
     protected $request;
 
@@ -417,5 +419,155 @@ class CurrentResponse implements CurrentResponseInterface
     public function removeCookie(string $name) : void
     {
         unset($this->cookie[$name]);
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getProtocolVersion() : ?string
+    {
+        return $this->request->getProtocolVersion();
+    }
+
+    /**
+     * @param string $version
+     *
+     * @return static
+     */
+    public function withProtocolVersion($version) : self
+    {
+        $response = clone $this;
+        $response->request = $response->request->withProtocolVersion($version);
+
+        return $response;
+    }
+
+        /**
+     * @param $name
+     *
+     * @return bool
+     */
+    public function hasHeader($name) : bool
+    {
+        $headers = [];
+        foreach ($this->headers as $key => $value) {
+            $headers[strtolower($key)] = $value;
+        }
+
+        return array_key_exists($name, $headers);
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return mixed|string[]|null
+     */
+    public function getHeader($name)
+    {
+        $headers = [];
+        foreach ($this->headers as $key => $value) {
+            $headers[strtolower($key)] = $value;
+        }
+
+        return $headers[strtolower($name)] ?? null;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return string
+     */
+    public function getHeaderLine($name) : string
+    {
+        return implode(',', (array)$this->getHeader($name));
+    }
+
+    /**
+     * @param string $name
+     * @param string|string[] $value
+     *
+     * @return static
+     */
+    public function withHeader($name, $value) : self
+    {
+        $response = clone $this;
+        $response->headers[$name] = $value;
+
+        return $response;
+    }
+
+    /**
+     * @param string $name
+     * @param string|string[] $value
+     *
+     * @return static
+     */
+    public function withAddedHeader($name, $value) : self
+    {
+        $response = clone $this;
+        $response->headers[$name] = array_merge($response->headers[$name], (array)$value);
+
+        return $response;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return static
+     */
+    public function withoutHeader($name) : self
+    {
+        $response = clone $this;
+        unset($response->headers[$name]);
+
+        return $response;
+    }
+
+    /**
+     * @return null
+     */
+    public function getBody()
+    {
+        return null;
+    }
+
+    /**
+     * @param StreamInterface $body
+     *
+     * @return static
+     */
+    public function withBody(StreamInterface $body)
+    {
+        return clone $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getStatusCode() : int
+    {
+        return $this->code;
+    }
+
+    /**
+     * @param int $code
+     * @param string $reasonPhrase
+     *
+     * @return static
+     */
+    public function withStatus($code, $reasonPhrase = '') : self
+    {
+        $response = clone $this;
+        $response->code = $code;
+
+        return $response;
+    }
+
+    /**
+     * @return string
+     */
+    public function getReasonPhrase() : string
+    {
+        return '';
     }
 }

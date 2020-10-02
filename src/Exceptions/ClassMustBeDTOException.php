@@ -2,7 +2,6 @@
 
 namespace Scaleplan\Http\Exceptions;
 
-use Scaleplan\DTO\DTO;
 use Scaleplan\HttpStatus\HttpStatusCodes;
 use function Scaleplan\Translator\translate;
 
@@ -14,7 +13,7 @@ use function Scaleplan\Translator\translate;
 class ClassMustBeDTOException extends \Exception
 {
     public const MESSAGE = 'http.class-must-inherits-dto';
-    public const CODE = HttpStatusCodes::HTTP_UNPROCESSABLE_ENTITY;
+    public const CODE    = HttpStatusCodes::HTTP_UNPROCESSABLE_ENTITY;
 
     /**
      * ClassMustBeDTOException constructor.

@@ -56,7 +56,7 @@ abstract class AbstractRequest implements AbstractRequestInterface
      *
      * @return mixed|null
      */
-    public function getHeader(string $name)
+    public function getHeader($name)
     {
         $headers = [];
         foreach ($this->headers as $key => $value) {
@@ -120,5 +120,20 @@ abstract class AbstractRequest implements AbstractRequestInterface
     public function getMethod() : string
     {
         return $this->method;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return bool
+     */
+    public function hasHeader($name) : bool
+    {
+        $headers = [];
+        foreach ($this->headers as $key => $value) {
+            $headers[strtolower($key)] = $value;
+        }
+
+        return array_key_exists($name, $headers);
     }
 }
